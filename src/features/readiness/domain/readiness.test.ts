@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  assessReadiness,
-  type ProductEvidence,
+  type ProductReference,
+  type ReadinessPolicy,
   type RequirementEvidenceInput,
+  StandardReadinessPolicy,
 } from "./readiness";
 
-const mappedProduct: ProductEvidence = {
+const mappedProduct: ProductReference = {
   id: "product-fire-collar",
   productCode: "DEMO-SC-100",
   name: "SampleShield SC-100 Fire Collar",
   canonicalUnit: "each",
 };
+
+const policy: ReadinessPolicy = new StandardReadinessPolicy();
 
 function requirement(
   overrides: Partial<RequirementEvidenceInput> = {},
@@ -29,9 +32,9 @@ function requirement(
   };
 }
 
-describe("assessReadiness", () => {
+describe("StandardReadinessPolicy", () => {
   it("marks a non-empty Work Package ready when every requirement is satisfied", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement(),
       requirement({
         id: "requirement-fire-compound",
@@ -73,7 +76,7 @@ describe("assessReadiness", () => {
   });
 
   it("marks a known deficit as a shortage and reports the decimal quantity missing", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({
         requiredQuantity: 3.75,
         inventorySnapshot: {
@@ -98,7 +101,7 @@ describe("assessReadiness", () => {
   });
 
   it("treats quantities equal to three decimal places as ready", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({
         requiredQuantity: 0.1 + 0.2,
         inventorySnapshot: {
@@ -121,7 +124,7 @@ describe("assessReadiness", () => {
   });
 
   it("reports a decimal shortage to three decimal places", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({
         requiredQuantity: 0.3,
         inventorySnapshot: {
@@ -136,7 +139,7 @@ describe("assessReadiness", () => {
   });
 
   it("gives a confirmed shortage precedence while retaining unknown evidence", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({
         id: "requirement-confirmed-shortage",
         requiredQuantity: 10,
@@ -196,7 +199,7 @@ describe("assessReadiness", () => {
   ] as const)(
     "marks $name as unknown with its canonical reason",
     ({ input, reason }) => {
-      const result = assessReadiness([input]);
+      const result = policy.assess([input]);
 
       expect(result.status).toBe("UNKNOWN");
       expect(result.requirements[0]).toEqual(
@@ -219,7 +222,7 @@ describe("assessReadiness", () => {
   );
 
   it("gives unknown evidence precedence over otherwise ready requirements", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({ id: "requirement-ready" }),
       requirement({
         id: "requirement-missing-snapshot",
@@ -235,7 +238,7 @@ describe("assessReadiness", () => {
   });
 
   it("does not treat a Work Package with no requirements as ready", () => {
-    expect(assessReadiness([])).toEqual({
+    expect(policy.assess([])).toEqual({
       status: "UNKNOWN",
       reason: "NO_REQUIREMENTS",
       requirements: [],
@@ -243,7 +246,7 @@ describe("assessReadiness", () => {
   });
 
   it("preserves zero as known evidence", () => {
-    const result = assessReadiness([
+    const result = policy.assess([
       requirement({
         id: "requirement-zero-demand",
         requiredQuantity: 0,

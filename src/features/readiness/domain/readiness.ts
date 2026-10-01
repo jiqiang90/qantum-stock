@@ -10,10 +10,15 @@ export type ReadinessReason =
   | "INSUFFICIENT_QUANTITY"
   | "SUFFICIENT_QUANTITY";
 
-export interface ProductEvidence {
+export interface ProductReference {
   readonly id: string;
   readonly productCode: string;
   readonly name: string;
+  /**
+   * Product-owned unit carried with this reference so readiness quantities are
+   * self-describing without duplicating unit ownership on requirements or
+   * inventory snapshots.
+   */
   readonly canonicalUnit: string;
 }
 
@@ -25,7 +30,7 @@ export interface InventorySnapshotEvidence {
 export interface RequirementEvidenceInput {
   readonly id: string;
   readonly description: string;
-  readonly product: ProductEvidence | null;
+  readonly product: ProductReference | null;
   readonly requiredQuantity: number | null;
   readonly inventorySnapshot: InventorySnapshotEvidence | null;
 }
@@ -33,7 +38,7 @@ export interface RequirementEvidenceInput {
 export interface RequirementAssessment {
   readonly requirementId: string;
   readonly description: string;
-  readonly product: ProductEvidence | null;
+  readonly product: ProductReference | null;
   readonly requiredQuantity: number | null;
   readonly availableQuantity: number | null;
   readonly missingQuantity: number | null;
@@ -48,7 +53,21 @@ export interface ReadinessAssessment {
   readonly requirements: readonly RequirementAssessment[];
 }
 
-export function assessReadiness(
+export interface ReadinessPolicy {
+  assess(
+    requirements: readonly RequirementEvidenceInput[],
+  ): ReadinessAssessment;
+}
+
+export class StandardReadinessPolicy implements ReadinessPolicy {
+  assess(
+    requirements: readonly RequirementEvidenceInput[],
+  ): ReadinessAssessment {
+    return assessReadiness(requirements);
+  }
+}
+
+function assessReadiness(
   requirements: readonly RequirementEvidenceInput[],
 ): ReadinessAssessment {
   if (requirements.length === 0) {

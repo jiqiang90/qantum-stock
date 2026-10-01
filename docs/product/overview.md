@@ -115,6 +115,7 @@ an honest external handoff, and dashed nodes are future capabilities.
 | Project foundation and local checks     | First Slice       | Implemented    |
 | Baseline CI workflow and observed run   | First Slice       | Implemented    |
 | Material Readiness calculation          | First Slice       | Implemented    |
+| Replaceable Readiness Policy Strategy   | First Slice       | Implemented    |
 | Work Package list and evidence view     | First Slice       | Designed only  |
 | Copyable Shortage Summary               | First Slice       | Designed only  |
 | Local/hosted Supabase Sample Data       | First Slice       | Designed only  |

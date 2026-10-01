@@ -19,7 +19,8 @@ unused abstractions.
   readiness assessment; do not add a persistence port.
 - Keep presentation responsible for interaction state and clipboard feedback,
   not readiness policy.
-- Use constructor injection only where a use case has a real dependency.
+- Use explicit constructor injection where a use case depends on the readiness
+  repository and policy Strategy.
 - Prefer a class only when it encapsulates state, invariants, lifecycle, or
   polymorphism; use pure functions for stateless calculations.
 
@@ -38,3 +39,6 @@ server or class-per-table design.
   is covered by unit tests.
 - If persistent handoff is later approved, it becomes a new capability with its
   own command boundary rather than being hidden in the readiness query module.
+- The readiness Strategy boundary and its future reservation-aware variation are
+  defined in
+  [`ADR-003`](ADR-003-readiness-policy-strategy.md).

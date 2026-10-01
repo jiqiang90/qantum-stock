@@ -15,8 +15,10 @@ generic framework is justified by A2.
 ```mermaid
 flowchart LR
     UI[Next.js pages and components] --> Queries[Readiness query use cases]
-    Queries --> Policy[Readiness domain policy]
+    Queries --> Policy[ReadinessPolicy Strategy]
     Queries --> Port[Readiness repository port]
+    Standard[StandardReadinessPolicy] --> Policy
+    Future[Future: ProjectAllocatedReadinessPolicy] -.-> Policy
     Adapter[Supabase readiness adapter] --> Port
     Adapter --> DB[(Supabase Postgres)]
     UI --> Summary[Shortage Summary builder]
@@ -25,8 +27,10 @@ flowchart LR
 
     classDef core fill:#dff7e8,stroke:#176b42,stroke-width:2px,color:#102a1d;
     classDef boundary fill:#eef3ff,stroke:#355aa8,color:#102040;
-    class Policy,Summary core;
+    classDef future fill:#fff,stroke:#777,stroke-dasharray:5 5,color:#444;
+    class Policy,Standard,Summary core;
     class UI,Queries,Port,Adapter,DB,Clipboard boundary;
+    class Future future;
 ```
 
 - **Domain:** framework-independent readiness types, rules, reasons, and
@@ -44,6 +48,26 @@ Next.js request/response types, or Supabase. A layer must own policy,
 orchestration, translation, or external integration; pass-through layers are not
 kept.
 
+## Strategy and constructor-injection boundary
+
+`ReadinessPolicy` is the domain Strategy contract.
+`StandardReadinessPolicy` implements the current `READY`, `SHORTAGE`, and
+`UNKNOWN` rules and is the only runtime Strategy in the First Slice. The
+credible future variation is multi-project shared inventory: a
+`ProjectAllocatedReadinessPolicy` may calculate usable stock after subtracting
+material reserved for other Work Packages. That future policy requires trusted
+reservation evidence and is not implemented by this submission.
+
+List/detail application use cases receive both `ReadinessRepository` and
+`ReadinessPolicy` through explicit constructor injection. Their tests use a
+controlled repository and `StubReadinessPolicy` to prove orchestration and
+substitutability. The stub is test-only evidence, not a second delivered
+business policy.
+
+No runtime Strategy factory, customer/project resolver, tenancy field, or
+dependency-injection framework is introduced. Those require a real selection
+contract and a second production Strategy.
+
 ## Readiness data flow
 
 ```mermaid
@@ -53,7 +77,7 @@ sequenceDiagram
     participant Query as Readiness query
     participant Repo as Supabase adapter
     participant DB as Supabase Postgres
-    participant Domain as Readiness policy
+    participant Policy as ReadinessPolicy
 
     TL->>Page: Open Work Package
     Page->>Query: getWorkPackageReadiness(id)
@@ -61,8 +85,8 @@ sequenceDiagram
     Repo->>DB: Read package, requirements, products, latest snapshots
     DB-->>Repo: Sample rows
     Repo-->>Query: Domain input
-    Query->>Domain: assessReadiness(input)
-    Domain-->>Query: Status, evidence, reasons
+    Query->>Policy: assess(input)
+    Policy-->>Query: Status, evidence, reasons
     Query-->>Page: Readiness view model
     Page-->>TL: Explain READY / SHORTAGE / UNKNOWN
 ```

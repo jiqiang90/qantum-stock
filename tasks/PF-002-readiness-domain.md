@@ -15,7 +15,7 @@ per-requirement evidence.
 - Produce
   `assessReadiness(requirements: readonly RequirementEvidenceInput[]): ReadinessAssessment`.
 - Define `ReadinessStatus`, `RequirementEvidenceInput`,
-  `ReadinessReason`, `ProductEvidence`, `InventorySnapshotEvidence`,
+  `ReadinessReason`, `ProductReference`, `InventorySnapshotEvidence`,
   `RequirementAssessment`, and `ReadinessAssessment` in the same domain module.
 
 No React, Next.js, Supabase, repository, class hierarchy, or unit conversion is
@@ -65,8 +65,8 @@ Completed on 2026-10-02.
 Contract clarification on 2026-10-02:
 
 - Red: `npm run typecheck` failed after the test fixture required `productCode`,
-  because `ProductEvidence` did not yet define it.
-- Green: adding the required field to `ProductEvidence` preserved the existing
+  because `ProductReference` did not yet define it.
+- Green: adding the required field to `ProductReference` preserved the existing
   readiness behavior; the focused 9 tests and type checking passed.
 - A second red/green check proved that an unmapped Product cannot expose orphan
   available quantity or Inventory Snapshot time; the focused suite failed on

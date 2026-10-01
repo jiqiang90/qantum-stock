@@ -1,7 +1,7 @@
 # PF-004: Readiness Query and Experience
 
 - Timebox: 75 minutes
-- Depends on: PF-002 and PF-003
+- Depends on: PF-002B and PF-003
 
 ## Outcome
 
@@ -13,13 +13,15 @@ understand its Material Readiness from visible evidence.
 - Create a small `server-only` Supabase read client or factory using
   `@supabase/supabase-js`. No cookie or request-scoped Auth behavior is needed.
 - Create a narrow readiness repository with `list()` and `findById(id)`.
-- Create list/detail query use cases and focused tests.
+- Create list/detail query use cases that receive `ReadinessRepository` and
+  `ReadinessPolicy` through explicit constructor injection.
 - Implement the Supabase adapter and targeted row-mapping tests.
 - Add small readiness presentation components plus list/detail pages and useful
   loading, empty, not-found, and dependency-error states.
 
-Use cases call the domain `assessReadiness` function and do not import React,
-Next.js, or Supabase.
+Use cases call the injected `ReadinessPolicy` and do not import React, Next.js,
+or Supabase. Application tests may inject `StubReadinessPolicy`; it is never
+runtime application code or evidence of a second delivered customer policy.
 
 ## Acceptance criteria
 
@@ -33,11 +35,14 @@ Next.js, or Supabase.
       generic material descriptions and units are not presented as identities.
 - [ ] Loading, no-data, not-found, and dependency-failure states never imply
       readiness.
+- [ ] Use-case tests prove repository and Strategy substitution through
+      constructor injection without a dependency-injection framework.
 - [ ] The readiness portion of AC-9 passes keyboard and narrow/mobile review.
 
 ## Execution checklist
 
-- [ ] Write failing use-case tests with a controlled repository.
+- [ ] Write failing use-case tests with a controlled repository and test-only
+      `StubReadinessPolicy`.
 - [ ] Implement the repository port and two small query use cases.
 - [ ] Implement Supabase row translation and targeted mapping tests.
 - [ ] Implement list/detail UI with the minimum reusable components.

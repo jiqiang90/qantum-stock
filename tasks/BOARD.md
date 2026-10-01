@@ -23,8 +23,9 @@ Only one implementation item should normally be `In Progress`.
 | [PF-001](PF-001-project-foundation.md)    | Reproducible application and quality-tooling foundation | Completed | Done    | None             |
 | [PF-001A](PF-001A-repository-baseline.md) | Reviewed local, remote, and first-CI baseline           | 15 min    | Done    | PF-001, approval |
 | [PF-002](PF-002-readiness-domain.md)      | Framework-independent readiness decisions               | 35 min    | Done    | PF-001A          |
+| [PF-002B](PF-002B-readiness-policy.md)    | Replaceable readiness policy with unchanged behaviour   | 20 min    | Done    | PF-002           |
 | [PF-003](PF-003-local-supabase.md)        | Reproducible read-only local database and Sample Data   | 60 min    | Backlog | PF-002, Docker   |
-| [PF-004](PF-004-readiness-experience.md)  | List/detail readiness experience backed by Supabase     | 75 min    | Backlog | PF-002, PF-003   |
+| [PF-004](PF-004-readiness-experience.md)  | List/detail readiness experience backed by Supabase     | 75 min    | Backlog | PF-002B, PF-003  |
 | [PF-005](PF-005-shortage-summary.md)      | Validated, previewable, copyable Shortage Summary       | 45 min    | Backlog | PF-002, PF-004   |
 | [PF-006](PF-006-verification-pipeline.md) | First Slice E2E journey and local/CI verification       | 60 min    | Backlog | PF-003, PF-005   |
 | [PF-007](PF-007-public-delivery.md)       | Public deployment and independently checked evidence    | 60 min    | Backlog | PF-006, approval |
@@ -41,7 +42,7 @@ definition above is satisfied. Do not copy stable requirements, architecture,
 or large command logs into this board. Proposed abstraction must solve a current
 acceptance criterion or recorded risk.
 
-The remaining implementation timeboxes total approximately 5 hours.
+The remaining implementation timeboxes total approximately 5 hours 20 minutes.
 The 4-6 hour budget excludes completed discovery and scaffolding and assumes
 smooth local/provider setup. Provider or environment delays are reported
 separately; do not recover time by diluting readiness rules, permission checks,

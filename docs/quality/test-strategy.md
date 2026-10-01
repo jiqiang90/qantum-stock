@@ -32,7 +32,10 @@ zero. These tests import no React, Next.js, Supabase, or browser API.
 
 ### Application and adapter tests
 
-- Query use cases are tested with a controlled readiness repository.
+- Query use cases are tested with a controlled readiness repository and a
+  test-only `StubReadinessPolicy`. Tests prove that constructor injection is
+  used and that no use case hard-codes `StandardReadinessPolicy`; the stub is not
+  evidence of a second delivered business policy.
 - Supabase mapping tests prove concrete Product identity, including Product
   Code, is retained and nullable database fields become unknown evidence instead
   of numeric zero.

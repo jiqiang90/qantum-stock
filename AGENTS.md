@@ -53,18 +53,23 @@ proof that a fire-stopping solution is compliant or approved.
 ## Architecture
 
 - Keep a Next.js modular monolith organized by business capability.
-- Presentation adapters call application use cases. Read use cases depend on
-  domain policy and a small repository port; Supabase adapters implement that
-  port. Pure summary construction needs no repository abstraction. Domain code
-  never depends on a repository port.
+- Presentation adapters call application use cases. Read use cases depend on a
+  `ReadinessPolicy` Strategy and a small repository port; Supabase adapters
+  implement that port. Pure summary construction needs no repository
+  abstraction. Domain code never depends on a repository port.
 - Domain and application code must not import Supabase, Next.js request/response
   types, or React.
 - Route handlers translate transport concerns and call one application use case;
   they do not contain business rules or direct database queries.
 - Repository ports belong beside the use case that consumes them. Keep them
   small and capability-specific.
-- Use explicit constructor injection. Do not introduce a dependency-injection
-  framework or a separate Node service for this slice.
+- `StandardReadinessPolicy` is the only First Slice runtime Strategy. A
+  `StubReadinessPolicy` may exist only in tests to prove substitutability. A
+  reservation-aware strategy is a documented future response to multi-project
+  shared inventory, not executable placeholder code.
+- Inject the readiness repository and `ReadinessPolicy` explicitly through
+  application-use-case constructors. Do not introduce a dependency-injection
+  framework, runtime Strategy factory, or separate Node service for this slice.
 - Prefer object-oriented design for domain entities, value objects, application
   use cases, ports, and adapters. Encapsulate invariants and inject dependencies
   through constructors.
