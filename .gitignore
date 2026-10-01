@@ -1,0 +1,31 @@
+# Dependencies
+/node_modules
+
+# Next.js
+/.next
+/out
+
+# Test output
+/coverage
+/playwright-report
+/test-results
+
+# Local environment files
+.env*
+!.env.example
+
+# Tooling and operating-system files
+*.tsbuildinfo
+.DS_Store
+.idea
+npm-debug.log*
+
+# Local reference material
+/docs/QAntum senior software engineer take home exercise.docx
+/docs/QAntum senior software engineer take home exercise.zh-CN.md
+/docs/~$*.docx
+/data/solutions-excerpt.csv
+/notes/
+
+# Vercel
+.vercel
