@@ -24,7 +24,7 @@ Only one implementation item should normally be `In Progress`.
 | [PF-001A](PF-001A-repository-baseline.md) | Reviewed local, remote, and first-CI baseline           | 15 min    | Done    | PF-001, approval |
 | [PF-002](PF-002-readiness-domain.md)      | Framework-independent readiness decisions               | 35 min    | Done    | PF-001A          |
 | [PF-002B](PF-002B-readiness-policy.md)    | Replaceable readiness policy with unchanged behaviour   | 20 min    | Done    | PF-002           |
-| [PF-003](PF-003-local-supabase.md)        | Reproducible read-only local database and Sample Data   | 60 min    | Backlog | PF-002, Docker   |
+| [PF-003](PF-003-local-supabase.md)        | Reproducible read-only local database and Sample Data   | 60 min    | Done    | PF-002, Docker   |
 | [PF-004](PF-004-readiness-experience.md)  | List/detail readiness experience backed by Supabase     | 75 min    | Backlog | PF-002B, PF-003  |
 | [PF-005](PF-005-shortage-summary.md)      | Validated, previewable, copyable Shortage Summary       | 45 min    | Backlog | PF-002, PF-004   |
 | [PF-006](PF-006-verification-pipeline.md) | First Slice E2E journey and local/CI verification       | 60 min    | Backlog | PF-003, PF-005   |

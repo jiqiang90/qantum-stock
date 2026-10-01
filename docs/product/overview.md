@@ -110,22 +110,23 @@ an honest external handoff, and dashed nodes are future capabilities.
 - **Designed only:** documented intent; no executable placeholder.
 - **Production Gap:** a known requirement that needs an operational contract.
 
-| Capability                              | Delivery boundary | Current status |
-| --------------------------------------- | ----------------- | -------------- |
-| Project foundation and local checks     | First Slice       | Implemented    |
-| Baseline CI workflow and observed run   | First Slice       | Implemented    |
-| Material Readiness calculation          | First Slice       | Implemented    |
-| Replaceable Readiness Policy Strategy   | First Slice       | Implemented    |
-| Work Package list and evidence view     | First Slice       | Designed only  |
-| Copyable Shortage Summary               | First Slice       | Designed only  |
-| Local/hosted Supabase Sample Data       | First Slice       | Designed only  |
-| Complete First Slice CI pipeline        | First Slice       | Designed only  |
-| Public Vercel demonstration             | First Slice       | Designed only  |
-| Authenticated Team Leader access        | Future            | Production Gap |
-| Recipient, assignment, and notification | Future            | Production Gap |
-| Resolution and audit history            | Future            | Designed only  |
-| Live inventory and unit conversion      | Future            | Production Gap |
-| Alternative-Solution approval           | Future            | Production Gap |
+| Capability                              | Delivery boundary | Current status                |
+| --------------------------------------- | ----------------- | ----------------------------- |
+| Project foundation and local checks     | First Slice       | Implemented                   |
+| Baseline CI workflow and observed run   | First Slice       | Implemented                   |
+| Material Readiness calculation          | First Slice       | Implemented                   |
+| Replaceable Readiness Policy Strategy   | First Slice       | Implemented                   |
+| Work Package list and evidence view     | First Slice       | Designed only                 |
+| Copyable Shortage Summary               | First Slice       | Designed only                 |
+| Local Supabase Sample Data              | First Slice       | Demonstrated with Sample Data |
+| Hosted Supabase Sample Data             | First Slice       | Designed only                 |
+| Complete First Slice CI pipeline        | First Slice       | Designed only                 |
+| Public Vercel demonstration             | First Slice       | Designed only                 |
+| Authenticated Team Leader access        | Future            | Production Gap                |
+| Recipient, assignment, and notification | Future            | Production Gap                |
+| Resolution and audit history            | Future            | Designed only                 |
+| Live inventory and unit conversion      | Future            | Production Gap                |
+| Alternative-Solution approval           | Future            | Production Gap                |
 
 Statuses change only when supported by implementation and verification evidence.
 

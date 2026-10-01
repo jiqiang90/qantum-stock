@@ -27,7 +27,7 @@ runtime application code or evidence of a second delivered customer policy.
 
 - [ ] AC-1 through AC-5 in `docs/specs/material-readiness.md` are observable
       through the list/detail experience without duplicating domain logic.
-- [ ] The list shows all three seeded Work Packages under one visible Sample
+- [ ] The list shows all nine seeded Work Packages under one visible Sample
       Data notice.
 - [ ] The nominated synthetic Solution is presented as context, not compliance
       approval or a supplied catalogue record.

@@ -8,10 +8,10 @@ business communication channel before travelling to site.
 ## Current status
 
 The application foundation, local quality tooling, baseline GitHub Actions run,
-and framework-independent Material Readiness calculation are verified. Product,
-architecture, data-flow, testing, and execution documents are ready for review;
-the user-facing journey, Supabase schema, database/browser CI stages, and public
-deployment are not yet implemented.
+framework-independent Material Readiness calculation, and reproducible local
+Supabase schema are verified. Product, architecture, data-flow, testing, and
+execution documents are ready for review; the user-facing journey,
+database/browser CI stages, and public deployment are not yet implemented.
 
 ## Quick start
 
@@ -26,6 +26,19 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+Local database development also requires Docker. Recreate the read-only Sample
+Data model from its migration and seed with:
+
+```bash
+npm run db:start
+npm run db:reset
+npm run db:test
+```
+
+Local Supabase Studio is available at `http://127.0.0.1:54323`. Run
+`npm run db:types` after a schema change, and stop the local stack with
+`npm run db:stop` when it is no longer needed.
+
 ## Quality commands
 
 ```bash
@@ -39,7 +52,7 @@ npm run build
 Run `npm run check` for the complete local quality gate. Playwright is configured,
 but a browser test is not claimed until a real journey exists.
 
-Copy `.env.example` to `.env.local` when Supabase integration is introduced.
+Copy `.env.example` to `.env.local` when the Supabase-backed UI is introduced.
 Only the public Supabase URL and publishable key belong there; no service-role
 credential is required by the application.
 
@@ -74,8 +87,8 @@ implemented.
 
 ## Data and limitations
 
-- Supabase Postgres is the planned runtime source of truth and local Supabase is
-  the repeatable development/test environment.
+- Supabase Postgres is the runtime source of truth and local Supabase is the
+  repeatable development/test environment.
 - The First Slice is read-only. It does not authenticate a Team Leader, persist
   a report, notify a recipient, assign an owner, or track resolution.
 - The copied Shortage Summary is intended for an existing business channel; the

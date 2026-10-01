@@ -129,7 +129,7 @@ was sent, reported, escalated, received, or resolved.
 ```mermaid
 erDiagram
     SOLUTION ||--o{ WORK_PACKAGE : nominated_for
-    WORK_PACKAGE ||--|{ PRODUCT_REQUIREMENT : contains
+    WORK_PACKAGE ||--o{ PRODUCT_REQUIREMENT : contains
     PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_identify
     PRODUCT ||--o{ INVENTORY_SNAPSHOT : has
 
@@ -152,6 +152,7 @@ erDiagram
     PRODUCT_REQUIREMENT {
         uuid id PK
         uuid work_package_id FK
+        integer position
         uuid product_id FK "nullable"
         text description
         numeric required_quantity "nullable, scale 3"
@@ -171,8 +172,10 @@ generic material descriptions and units are not Product identities. Supplied
 Solution `Internal Code` and `Supplier Ref. Code` values are never reused as
 Product Codes. `ProductRequirement.product_id` and `required_quantity` are
 nullable so the demo can explain `UNKNOWN`. Requirement and inventory rows do
-not repeat units; both quantities use the Product's canonical unit. Persisted
-quantities use `numeric(12,3)` and domain arithmetic normalizes to the same
+not repeat units; both quantities use the Product's canonical unit. The
+`position` field preserves the planned requirement order used by evidence and
+summary output. Persisted quantities use `numeric(12,3)` and domain arithmetic
+normalizes to the same
 three-decimal scale.
 
 There is no row-level `sample_data` flag because every runtime row in this demo

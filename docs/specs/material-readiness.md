@@ -42,22 +42,39 @@ Operations task, or track resolution.
 7. The optional note is trimmed, blank becomes absent, and the maximum length is
    500 characters.
 
-## Illustrative Sample Data scenario
+## Sample Data scenario design
 
-One Sample Work Package represents a bounded installation scenario, not a whole
-construction Project. Its Product Requirements can mix resolved and unresolved
-material needs:
+The received catalogue excerpt provides credible context for Solution variety:
+wall, floor, and ceiling orientations; pipe, conduit, cable, and structural
+services; and several substrate types. Each source row is still a Solution, not
+a Product Requirement or Inventory Snapshot. The seed therefore uses those
+dimensions to choose representative contexts without copying catalogue rows,
+supplier references, or internal codes.
 
-| Product Requirement                                          | Mapped Product                               | Product Code  | Required quantity |
-| ------------------------------------------------------------ | -------------------------------------------- | ------------- | ----------------- |
-| Install collars to ten 100 mm copper-pipe penetrations       | SampleShield SC-100 Fire Collar              | `DEMO-SC-100` | `10 each`         |
-| Seal six service penetrations                                | SampleSeal IS-310 Intumescent Sealant 310 ml | `DEMO-IS-310` | `6 cartridges`    |
-| Complete fire stopping for an unresolved service penetration | Unknown                                      | Unknown       | Unknown           |
+All Solution names, Products, Product Codes, mappings, quantities, and Inventory
+Snapshots below are synthetic. They exercise evidence handling and do not claim
+that a Product is approved or compliant for the described Solution.
 
-`Fire Collar` and `Fire Sealant` are generic material descriptions in this
-example. `SampleShield SC-100 Fire Collar` and `SampleSeal IS-310 Intumescent
-Sealant 310 ml` are the concrete synthetic Products. `each` and `cartridge` are
-their canonical units. No Product Category entity is required by this slice.
+| Sample Work Package                          | Catalogue-inspired context          | Evidence setup                                       | Expected result                         |
+| -------------------------------------------- | ----------------------------------- | ---------------------------------------------------- | --------------------------------------- |
+| Wall penetration exactly supplied            | Plasterboard wall, PVC conduit      | One Product; required `10`, available `10`           | `READY` at the equality boundary        |
+| Wall penetration with multiple products      | Plasterboard wall, copper pipe      | Two Products; both quantities sufficient             | `READY` across multiple requirements    |
+| Concrete floor partial shortage              | Concrete floor, PVC pipe            | Required `12`, available `10`                        | `SHORTAGE`, missing `2`                 |
+| Timber floor with zero available             | Timber infill floor, PVC pipe       | Required `4`, available `0`                          | `SHORTAGE`; zero remains known evidence |
+| Cable tray with shortage and unresolved item | Plasterboard wall, cable tray       | One confirmed shortage plus one unmapped requirement | `SHORTAGE` takes precedence             |
+| Ceiling penetration with unmapped product    | Plasterboard ceiling, PVC pipe      | Product mapping absent                               | `UNKNOWN / PRODUCT_NOT_MAPPED`          |
+| Insulated pipe with unknown demand           | Plasterboard wall, insulated copper | Product mapped; required quantity absent             | `UNKNOWN / REQUIRED_QUANTITY_MISSING`   |
+| Cable bundle with no inventory evidence      | Plasterboard wall, cable bundle     | Product and demand known; Inventory Snapshot absent  | `UNKNOWN / INVENTORY_SNAPSHOT_MISSING`  |
+| Structural penetration awaiting requirements | Plasterboard wall, timber beam      | No Product Requirements yet                          | `UNKNOWN / NO_REQUIREMENTS`             |
+
+The six Products have specific synthetic identities such as `SampleShield
+SC-100 Fire Collar` and `SampleSeal IS-310 Intumescent Sealant 310 ml`. The
+illustrative mapping keeps the collar with a PVC pipe context and the sealant
+with copper-pipe and cable contexts, but it remains Sample Data rather than a
+technical approval. Generic material descriptions and packaging units are not
+Product identities. Each Product owns one canonical unit; dependent quantities
+do not repeat or convert that unit. No Product Category entity is required by
+this slice.
 
 ## Boundary
 

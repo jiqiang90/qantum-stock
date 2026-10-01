@@ -50,7 +50,7 @@ zero. These tests import no React, Next.js, Supabase, or browser API.
 
 Start from a clean migration and seed. Prove constraints, non-negative
 quantities, relationships, Product Code uniqueness, canonical-unit ownership,
-three representative Work Packages, deterministic latest-snapshot selection,
+the nine-scenario Sample Data matrix, deterministic latest-snapshot selection,
 allowed public reads, and denied public insert, update, and delete.
 
 There are no authentication, creator-isolation, RPC-write, or transactional
