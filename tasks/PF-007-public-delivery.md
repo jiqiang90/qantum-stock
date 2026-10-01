@@ -44,11 +44,12 @@ remain pipeline behavior.
 - [ ] Public responses use proportionate security headers.
 - [ ] The supplied catalogue excerpt remains outside Git history and runtime.
 
-## Human implementation guide
+## Execution checklist
 
 - [ ] Run clean local verification and review migrations before external change.
-- [ ] After authorization, create/link GitHub, Supabase, and Vercel resources
-      and configure secrets without writing them to source.
+- [ ] After authorization, use the existing GitHub repository, create/link the
+      hosted Supabase and Vercel resources, and configure secrets without
+      writing them to source.
 - [ ] Apply hosted migration/seed and verify read-only public access.
 - [ ] Extend the existing workflow with the CI-gated deployment job and verify
       its exact revision.

@@ -28,13 +28,16 @@ offline sync, or administration.
 The supplied `data/solutions-excerpt.csv` is ignored local reference material
 and must not enter Git history or become a runtime dependency. Each row
 represents a Solution; `Internal Code` and `Supplier Ref. Code` identify that
-Solution and must not be reused as Product identifiers. The received CSV exposes
-no Product fields or Solution-to-Product relationship. The committed demo
-dataset and its user-facing surfaces must be clearly labelled as Sample Data.
-Synthetic Solutions, Products, Work Packages, Product Requirements, quantities,
-mappings, and inventory values must not copy supplied catalogue records. A
-matching catalogue field is never proof that a fire-stopping solution is
-compliant or approved.
+Solution and must not be reused as Product identifiers. Although the brief says
+the catalogue includes required products, the received CSV exposes no Product
+fields or Solution-to-Product relationship. The committed demo dataset and its
+user-facing surfaces must be clearly labelled as Sample Data. Synthetic
+Solutions, Products, Work Packages, Product Requirements, quantities, mappings,
+and inventory values must not copy supplied catalogue records. A Product is a
+specific stock-tracked item with its own synthetic Product Code and specific
+name; generic labels such as `Fire Collar` or `Fire Sealant`, and units such as
+`cartridge`, are not Product identities. A matching catalogue field is never
+proof that a fire-stopping solution is compliant or approved.
 
 ## Canonical language
 

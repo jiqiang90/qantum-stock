@@ -26,16 +26,38 @@ Operations task, or track resolution.
 2. One Sample Work Package represents one planned scenario using one nominated
    synthetic Solution.
 3. Product Requirements and Inventory Snapshots are independently authored
-   Sample Data because the supplied CSV contains no usable Product mapping or
-   demand quantities.
-4. Each Product has one canonical unit. Required and available quantities are
-   already expressed in it; packaging and conversion are excluded.
+   Sample Data. The brief says the catalogue includes required products, but the
+   received CSV contains no Product fields, usable Product mapping, or demand
+   quantities.
+4. Each Product is a specific stock-tracked item with a unique synthetic Product
+   Code, a specific name, and one canonical unit. Generic material descriptions
+   and packaging units do not identify a Product. Required and available
+   quantities are already expressed in the Product's canonical unit; packaging
+   and conversion are excluded. First Slice quantities use at most three decimal
+   places, and readiness arithmetic normalizes evidence to that scale.
 5. The latest Inventory Snapshot is the available quantity for this slice. No
    reservation, warehouse, or in-transit logic is implied.
 6. A copied Shortage Summary is transient. It is not stored, assigned, sent, or
    acknowledged by this application.
 7. The optional note is trimmed, blank becomes absent, and the maximum length is
    500 characters.
+
+## Illustrative Sample Data scenario
+
+One Sample Work Package represents a bounded installation scenario, not a whole
+construction Project. Its Product Requirements can mix resolved and unresolved
+material needs:
+
+| Product Requirement                                          | Mapped Product                               | Product Code  | Required quantity |
+| ------------------------------------------------------------ | -------------------------------------------- | ------------- | ----------------- |
+| Install collars to ten 100 mm copper-pipe penetrations       | SampleShield SC-100 Fire Collar              | `DEMO-SC-100` | `10 each`         |
+| Seal six service penetrations                                | SampleSeal IS-310 Intumescent Sealant 310 ml | `DEMO-IS-310` | `6 cartridges`    |
+| Complete fire stopping for an unresolved service penetration | Unknown                                      | Unknown       | Unknown           |
+
+`Fire Collar` and `Fire Sealant` are generic material descriptions in this
+example. `SampleShield SC-100 Fire Collar` and `SampleSeal IS-310 Intumescent
+Sealant 310 ml` are the concrete synthetic Products. `each` and `cartridge` are
+their canonical units. No Product Category entity is required by this slice.
 
 ## Boundary
 
@@ -76,6 +98,9 @@ No runtime write is produced.
 - A known requirement with `available < required` is `SHORTAGE`.
 - Missing Product mapping, required quantity, or Inventory Snapshot is
   `UNKNOWN`.
+- Inventory evidence is attributable only through a mapped Product. Without a
+  Product mapping, available quantity and Inventory Snapshot time are unknown;
+  inconsistent orphan evidence is not displayed.
 - A Work Package with any `SHORTAGE` requirement is `SHORTAGE`, even if another
   requirement is `UNKNOWN`.
 - Otherwise, a Work Package with any `UNKNOWN` requirement is `UNKNOWN`.
@@ -96,11 +121,18 @@ canonical reason code:
 Presentation maps these codes to human-readable explanations; it does not infer
 different business results.
 
+`UNKNOWN` is an evidence state, not another word for shortage or zero. It occurs
+when the Product is not mapped, required quantity is missing, Inventory Snapshot
+is missing, or the Work Package has no Product Requirements. Dependency
+failures and missing Work Packages use explicit error/not-found states instead
+of `UNKNOWN`.
+
 ### FR-2: Explain evidence
 
-For every requirement, show its description, mapped Product when known, required
-quantity, available quantity, missing quantity when calculable, canonical unit,
-Inventory Snapshot time when present, status, and reason.
+For every requirement, show its description, mapped Product name and Product
+Code when known, required quantity, available quantity, missing quantity when
+calculable, canonical unit, Inventory Snapshot time when present, status, and
+reason.
 
 ### FR-3: Prepare summary
 
@@ -109,7 +141,8 @@ Inventory Snapshot time when present, status, and reason.
 - Only Blocking Requirements belonging to that Work Package may be selected.
 - At least one Blocking Requirement must be selected.
 - The summary contains Work Package name, planned date, overall readiness,
-  selected evidence, snapshot time where known, and the optional note.
+  selected evidence including Product Code where known, snapshot time where
+  known, and the optional note.
 - Selected blockers appear in their Work Package requirement order, independent
   of click order.
 - Identical validated input produces identical text.
@@ -128,6 +161,7 @@ Data: Sample Data demonstration
 Blocking requirements:
 - [<SHORTAGE|UNKNOWN>] <description>
   Product: <name|Unknown>
+  Product code: <product code|Unknown>
   Required: <quantity unit|Unknown>
   Available: <quantity unit|Unknown>
   Missing: <quantity unit|Unknown>
@@ -166,8 +200,9 @@ delivery when the evidence is unavailable.
   `UNKNOWN` with a specific reason when no confirmed shortage exists; no Product
   Requirements results in `UNKNOWN / NO_REQUIREMENTS`.
 - **AC-4:** `0` required or available is preserved as known numeric evidence.
-- **AC-5:** quantities for a Product share its canonical unit; no implicit
-  conversion occurs.
+- **AC-5:** known Product evidence contains a specific name and Product Code;
+  quantities for a Product share its canonical unit and no implicit conversion
+  occurs.
 - **AC-6:** valid selected blockers produce the specified deterministic summary,
   including a trimmed note when supplied.
 - **AC-7:** empty selection, duplicate or unrelated IDs, ready requirements,
@@ -187,6 +222,8 @@ delivery when the evidence is unavailable.
 - Sample Data is disclosed once at page/layout level instead of repeated as a
   field on every database record.
 - Errors shown to a public user do not expose database internals or secrets.
+- Persisted required and available quantities are non-negative; the domain
+  calculation consumes this validated internal evidence.
 
 ## Explicit exclusions
 

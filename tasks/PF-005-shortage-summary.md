@@ -31,7 +31,7 @@ absent, and the maximum length is 500 characters.
 - [ ] The summary portion of AC-9 passes keyboard and narrow/mobile review.
 - [ ] No summary, report, user, recipient, or delivery state is persisted.
 
-## Human implementation guide
+## Execution checklist
 
 - [ ] Write failing builder tests for exact content, ordering, unknown evidence,
       zero, note normalization, and invalid selections.

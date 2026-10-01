@@ -39,7 +39,7 @@ add note -> preview -> copy. The clipboard is controlled deterministically.
 - [ ] The browser assertion distinguishes copied text from sent content.
 - [ ] CI success is not described as deployment or public-runtime evidence.
 
-## Human implementation guide
+## Execution checklist
 
 - [ ] Write the browser journey and run it from a clean reset.
 - [ ] Configure Playwright to build/start the production application for the

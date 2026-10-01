@@ -21,9 +21,10 @@ versioned migrations and deterministic synthetic seed data.
 
 The schema contains `solutions`, `work_packages`, `products`,
 `product_requirements`, and `inventory_snapshots`. One Sample Work Package has
-one nominated synthetic Solution. A Product owns its canonical unit;
-requirement and inventory quantities do not repeat it. Nullable Product mapping
-or required quantity and an absent snapshot preserve `UNKNOWN` evidence.
+one nominated synthetic Solution. A Product has a unique synthetic Product Code,
+a specific name, and one canonical unit; requirement and inventory quantities do
+not repeat the unit. Nullable Product mapping or required quantity and an absent
+snapshot preserve `UNKNOWN` evidence. Do not add a Product Category table.
 
 Do not add Auth, write RPCs, persisted summaries, `sample_data` columns, or an
 unused provenance field.
@@ -35,9 +36,16 @@ unused provenance field.
 - [ ] Seed data contains three Sample Work Packages covering `READY`,
       `SHORTAGE`, and `UNKNOWN`.
 - [ ] Synthetic records do not copy supplied catalogue rows or reuse Solution
-      identifiers as Product IDs.
-- [ ] Every Product has a non-empty canonical unit; dependent quantities have no
-      separate unit or conversion fields.
+      identifiers as Product IDs or Product Codes.
+- [ ] Every Product has a unique non-empty Product Code, a specific Product name,
+      and a non-empty canonical unit; dependent quantities have no separate unit
+      or conversion fields.
+- [ ] Required and available quantities cannot be negative; numeric zero remains
+      valid.
+- [ ] Quantity columns use `numeric(12,3)`, matching the domain's
+      three-decimal normalization rule.
+- [ ] Seed Product names identify concrete synthetic products rather than using
+      `Fire Collar`, `Fire Sealant`, or a packaging unit as the whole identity.
 - [ ] Public runtime access can select the required demo data and cannot insert,
       update, or delete it.
 - [ ] Latest Inventory Snapshot selection is deterministic by
@@ -45,7 +53,7 @@ unused provenance field.
 - [ ] Database types regenerate without manual edits.
 - [ ] No service-role or hosted secret is committed.
 
-## Human implementation guide
+## Execution checklist
 
 - [ ] Install/initialize the local Supabase toolchain.
 - [ ] Write failing schema and permission tests before the migration.

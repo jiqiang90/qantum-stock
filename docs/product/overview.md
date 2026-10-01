@@ -21,11 +21,12 @@ only the first useful decision and handoff artefact.
   Solution, and it affects crew scheduling.
 - Existing web and offline-first mobile products serve other users, but no Team
   Leader experience is defined.
-- The supplied catalogue describes Solutions, not planned work, required-product
-  quantities, stock balances, delivery dates, or crew schedules.
-- The received CSV exposes no Product identifier, Product name, SKU, or
+- The brief says the supplied catalogue includes required products, but the
+  received CSV exposes no Product identifier, Product name, SKU, or
   Solution-to-Product relationship. Its `Internal Code` and
-  `Supplier Ref. Code` identify Solutions.
+  `Supplier Ref. Code` identify Solutions, and the file contains no planned
+  work, required-product quantities, stock balances, delivery dates, or crew
+  schedules.
 - The candidate must choose a useful First Slice, create Sample Data where
   required, and make assumptions and Production Gaps explicit.
 
@@ -96,7 +97,7 @@ an honest external handoff, and dashed nodes are future capabilities.
 | Slice                                         | User value                                                                                                        | Delivery        |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------- |
 | 1. Readiness + Copy Shortage Summary          | A Team Leader can identify a blocked visit and copy accurate shortage evidence before travelling                  | This submission |
-| 2. Material Shortage Notice                   | A Project Manager coordinates a material response and returns an Action Plan to the Team Leader                   | Later           |
+| 2. Material Shortage Notice                   | An accountable coordinator returns a material Action Plan to the Team Leader; the exact role requires validation  | Later           |
 | 3. Shortage resolution                        | Operations can record whether materials will be purchased, transferred, or awaited                                | Later           |
 | 4. Alternative-Solution approval              | Reviewers can assess an alternative without treating catalogue similarity as compliance proof                     | Later           |
 | 5. Scheduling, live inventory, offline access | Planners can act on resolution using operational data, and field users can work through intermittent connectivity | Later           |
@@ -112,12 +113,12 @@ an honest external handoff, and dashed nodes are future capabilities.
 | Capability                              | Delivery boundary | Current status |
 | --------------------------------------- | ----------------- | -------------- |
 | Project foundation and local checks     | First Slice       | Implemented    |
-| Baseline CI workflow configuration      | First Slice       | Implemented    |
-| Material Readiness calculation          | First Slice       | Designed only  |
+| Baseline CI workflow and observed run   | First Slice       | Implemented    |
+| Material Readiness calculation          | First Slice       | Implemented    |
 | Work Package list and evidence view     | First Slice       | Designed only  |
 | Copyable Shortage Summary               | First Slice       | Designed only  |
 | Local/hosted Supabase Sample Data       | First Slice       | Designed only  |
-| Complete GitHub CI execution            | First Slice       | Designed only  |
+| Complete First Slice CI pipeline        | First Slice       | Designed only  |
 | Public Vercel demonstration             | First Slice       | Designed only  |
 | Authenticated Team Leader access        | Future            | Production Gap |
 | Recipient, assignment, and notification | Future            | Production Gap |

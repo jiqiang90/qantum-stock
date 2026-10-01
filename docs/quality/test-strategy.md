@@ -27,14 +27,15 @@ domain case through React, SQL, and Playwright.
 ### Domain unit tests
 
 Cover `READY`, `SHORTAGE`, `UNKNOWN`, empty requirements, precedence, mixed
-shortage/unknown requirements, decimal quantities, and explicit zero. These
-tests import no React, Next.js, Supabase, or browser API.
+shortage/unknown requirements, non-binary-exact decimal quantities, and explicit
+zero. These tests import no React, Next.js, Supabase, or browser API.
 
 ### Application and adapter tests
 
 - Query use cases are tested with a controlled readiness repository.
-- Supabase mapping tests prove nullable database fields become unknown evidence
-  instead of numeric zero.
+- Supabase mapping tests prove concrete Product identity, including Product
+  Code, is retained and nullable database fields become unknown evidence instead
+  of numeric zero.
 - The latest Inventory Snapshot ordering is deterministic.
 - The summary builder accepts only Blocking Requirements from the current
   assessment, normalizes the note, and produces exact deterministic text.
@@ -44,10 +45,10 @@ tests import no React, Next.js, Supabase, or browser API.
 
 ### Database tests
 
-Start from a clean migration and seed. Prove constraints, relationships,
-canonical-unit ownership, three representative Work Packages, deterministic
-latest-snapshot selection, allowed public reads, and denied public insert,
-update, and delete.
+Start from a clean migration and seed. Prove constraints, non-negative
+quantities, relationships, Product Code uniqueness, canonical-unit ownership,
+three representative Work Packages, deterministic latest-snapshot selection,
+allowed public reads, and denied public insert, update, and delete.
 
 There are no authentication, creator-isolation, RPC-write, or transactional
 report tests in A2 because it performs no runtime write.

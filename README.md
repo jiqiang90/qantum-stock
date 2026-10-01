@@ -7,10 +7,10 @@ business communication channel before travelling to site.
 
 ## Current status
 
-The application foundation and local quality tooling are verified. A baseline
-GitHub Actions workflow exists but has not yet run remotely. Product,
+The application foundation, local quality tooling, baseline GitHub Actions run,
+and framework-independent Material Readiness calculation are verified. Product,
 architecture, data-flow, testing, and execution documents are ready for review;
-the business journey, Supabase schema, database/browser CI stages, and public
+the user-facing journey, Supabase schema, database/browser CI stages, and public
 deployment are not yet implemented.
 
 ## Quick start

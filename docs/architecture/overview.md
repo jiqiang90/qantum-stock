@@ -68,8 +68,9 @@ sequenceDiagram
 ```
 
 The adapter chooses the latest Inventory Snapshot deterministically by
-`captured_at DESC, id DESC`. Missing data remains missing; `0` remains numeric
-evidence.
+`captured_at DESC, id DESC`. Inventory evidence is joined through the mapped
+Product; an unmapped requirement cannot expose an orphan available quantity or
+snapshot time. Missing data remains missing; `0` remains numeric evidence.
 
 ## Shortage Summary flow
 
@@ -120,6 +121,7 @@ erDiagram
     }
     PRODUCT {
         uuid id PK
+        text product_code UK
         text name
         text canonical_unit
     }
@@ -128,21 +130,26 @@ erDiagram
         uuid work_package_id FK
         uuid product_id FK "nullable"
         text description
-        numeric required_quantity "nullable"
+        numeric required_quantity "nullable, scale 3"
     }
     INVENTORY_SNAPSHOT {
         uuid id PK
         uuid product_id FK
-        numeric available_quantity
+        numeric available_quantity "scale 3"
         timestamptz captured_at
     }
 ```
 
 The one nominated Solution per Work Package is a demo assumption, not a claim
-about the production planning model. `ProductRequirement.product_id` and
-`required_quantity` are nullable so the demo can explain `UNKNOWN`. Requirement
-and inventory rows do not repeat units; both quantities use the Product's
-canonical unit.
+about the production planning model. Each Product represents a concrete
+stock-tracked item with a unique synthetic `product_code` and specific name;
+generic material descriptions and units are not Product identities. Supplied
+Solution `Internal Code` and `Supplier Ref. Code` values are never reused as
+Product Codes. `ProductRequirement.product_id` and `required_quantity` are
+nullable so the demo can explain `UNKNOWN`. Requirement and inventory rows do
+not repeat units; both quantities use the Product's canonical unit. Persisted
+quantities use `numeric(12,3)` and domain arithmetic normalizes to the same
+three-decimal scale.
 
 There is no row-level `sample_data` flag because every runtime row in this demo
 is synthetic. A global Sample Data notice carries that meaning. There is no

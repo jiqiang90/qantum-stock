@@ -29,11 +29,13 @@ Next.js, or Supabase.
       Data notice.
 - [ ] The nominated synthetic Solution is presented as context, not compliance
       approval or a supplied catalogue record.
+- [ ] Known Product evidence shows a specific Product name and Product Code;
+      generic material descriptions and units are not presented as identities.
 - [ ] Loading, no-data, not-found, and dependency-failure states never imply
       readiness.
 - [ ] The readiness portion of AC-9 passes keyboard and narrow/mobile review.
 
-## Human implementation guide
+## Execution checklist
 
 - [ ] Write failing use-case tests with a controlled repository.
 - [ ] Implement the repository port and two small query use cases.

@@ -18,7 +18,7 @@ A read-only check on 2026-10-02 found no remote `HEAD`, branches, or tags before
 the first push. The repository-local `origin` uses the equivalent SSH URL because
 the available `jiqiang90` GitHub authentication is configured for SSH.
 
-## Human implementation guide
+## Execution checklist
 
 - Review `.gitignore` before staging anything.
 - Confirm the supplied DOCX, translated notes, CSV, environment files,
