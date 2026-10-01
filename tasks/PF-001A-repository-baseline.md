@@ -8,14 +8,15 @@
 The project has a clean, reviewable local and GitHub baseline before business
 code is introduced.
 
-The confirmed remote is:
+The confirmed GitHub repository is:
 
 ```text
 https://github.com/jiqiang90/qantum-stock.git
 ```
 
-A read-only check on 2026-10-02 found no remote `HEAD`, branches, or tags. The
-human must recheck before the first push rather than assuming it remains empty.
+A read-only check on 2026-10-02 found no remote `HEAD`, branches, or tags before
+the first push. The repository-local `origin` uses the equivalent SSH URL because
+the available `jiqiang90` GitHub authentication is configured for SSH.
 
 ## Human implementation guide
 
@@ -34,16 +35,16 @@ human must recheck before the first push rather than assuming it remains empty.
 
 ## Acceptance criteria
 
-- [ ] `git status --short` contains only intended foundation, source,
+- [x] `git status --short` contains only intended foundation, source,
       documentation, and task files before commit.
-- [ ] No supplied/private reference material, secret, generated output, or local
+- [x] No supplied/private reference material, secret, generated output, or local
       tool state is staged.
-- [ ] The initial commit has an intentional message and a reviewed file boundary.
-- [ ] `origin` resolves exactly to the confirmed repository URL.
-- [ ] Local `main` and `origin/main` point to the same initial commit after a
+- [x] The initial commit has an intentional message and a reviewed file boundary.
+- [x] `origin` resolves to the confirmed repository identity over SSH.
+- [x] Local `main` and `origin/main` point to the same current commit after a
       non-forced push.
-- [ ] The working tree is clean after the push.
-- [ ] The first GitHub Actions run is recorded as passed or failed from observed
+- [x] The working tree is clean after the verified push.
+- [x] The first GitHub Actions run is recorded as passed or failed from observed
       GitHub evidence; workflow configuration is not treated as a passing run.
 
 ## Execution boundary
@@ -57,5 +58,23 @@ this task.
 
 ## Verification and evidence
 
-Not started. Record the commit SHA, remote URL, reviewed `git status`, push
-result, and GitHub Actions run URL here.
+| Date       | Evidence                       | Result                                                                                         |
+| ---------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| 2026-10-02 | Ignore and staged-file review  | Passed; supplied files, secrets, generated output, IDE state, and Word lock file were excluded |
+| 2026-10-02 | `npm run check`                | Passed: format, lint, typecheck, scaffold test, and production build                           |
+| 2026-10-02 | `npm audit --audit-level=high` | Passed; 0 vulnerabilities                                                                      |
+| 2026-10-02 | Initial commit                 | `c5e009d` — `chore: establish project foundation`                                              |
+| 2026-10-02 | First HTTPS push               | Rejected with 403 because the HTTPS credential helper selected unrelated account `jayjispotto` |
+| 2026-10-02 | Repository-local SSH origin    | `git@github.com:jiqiang90/qantum-stock.git`; read access verified before non-forced push       |
+| 2026-10-02 | First GitHub Actions run       | Passed: `https://github.com/jiqiang90/qantum-stock/actions/runs/36859967761`                   |
+| 2026-10-02 | CI runtime correction          | `8a7d87f`; pinned Ubuntu 24.04 and upgraded official checkout/setup-node actions to v7         |
+| 2026-10-02 | Corrected GitHub Actions run   | Passed: `https://github.com/jiqiang90/qantum-stock/actions/runs/36860152089`                   |
+
+## Decisions and deviations
+
+- The initial HTTPS push failure did not change remote history. The repo-local
+  origin was switched to SSH rather than changing global credentials or using
+  force.
+- The first CI run passed but warned that v4 actions used the deprecated Node 20
+  runtime and that `ubuntu-latest` would migrate. The workflow was corrected and
+  a second observed run passed without those annotations.
