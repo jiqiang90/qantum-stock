@@ -75,12 +75,15 @@ the strongest evaluable technical concerns while removing unsupported workflow.
   and row translation boundary.
 - The summary builder is a pure function because a class or port would add no
   invariant, lifecycle, or replaceable I/O.
-- One nominated Solution per Sample Work Package is documented as an assumption
-  rather than introducing a speculative Scenario aggregate.
-- `sample_data` flags are omitted from every row because the entire dataset is
-  synthetic and a global label communicates the fact more clearly.
-- `source_reference` is omitted until a real provenance source and consumer
-  exist.
+- One nominated Solution per Work Package is documented as an assumption
+  rather than introducing a speculative Scenario entity.
+- Row-level synthetic-data flags are omitted because provenance is clear at the
+  table boundary: selected Solution fields are source-backed; Work Packages,
+  Products, mappings, quantities, and inventory are synthetic. The persistent
+  read-only-demo header communicates the overall environment without repeated
+  warning text or identity prefixes.
+- A generic `source_reference` is omitted because Solution already preserves its
+  Supplier, Internal Code, and Supplier Ref. Code explicitly.
 
 ## Review focus
 

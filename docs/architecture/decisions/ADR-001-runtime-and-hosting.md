@@ -1,22 +1,24 @@
 # ADR-001: Runtime Data and Public Hosting
 
-- Status: Accepted
+- Status: Partially superseded by
+  [ADR-005](ADR-005-solution-selection.md)
 - Date: 2026-10-02
 
 ## Context
 
 The exercise asks for a public, testable First Slice, but the supplied catalogue
 does not contain the Product mappings, demand, or inventory needed to calculate
-Material Readiness. The selected A2 slice reads synthetic operational data and
-copies a transient summary; it does not need durable user writes.
+Material Readiness. The original A2 baseline reads synthetic operational data
+and copies a transient summary. The accepted PF-004B extension adds one durable
+selected-Solution write.
 
 ## Decision
 
 - Use Supabase Postgres for local and hosted runtime data.
 - Use versioned migrations and deterministic synthetic seed data.
-- Give the public runtime role read-only access to the minimum demo dataset.
-- Do not add Supabase Auth, write policies, RPC write functions, or persisted
-  Shortage Reports to A2.
+- Give the public runtime role read access to the minimum demo dataset and
+  execute access only to the constrained selected-Solution command.
+- Do not add Supabase Auth, general write policies, or persisted Shortage Reports.
 - Deploy the Next.js application to Vercel only when external setup is
   authorized.
 - Keep the supplied CSV ignored and outside the runtime path.
@@ -24,8 +26,9 @@ copies a transient summary; it does not need durable user writes.
 ## Why
 
 Supabase provides one PostgreSQL model for repeatable local tests and a hosted
-demo. Keeping runtime access read-only matches the actual A2 behavior and avoids
-inventing identity, recipients, or tenancy merely to make a record durable.
+demo. Keeping direct table access read-only and adding one bounded command avoids
+inventing a general administration surface. The demonstration explicitly
+assumes the visitor is the Team Leader; that assumption is not production auth.
 
 ## Alternatives considered
 
@@ -36,13 +39,14 @@ inventing identity, recipients, or tenancy merely to make a record durable.
 - **Persisted creator-only report with anonymous Auth:** rejected. It adds
   substantial security and testing work yet still does not deliver an issue to
   a real recipient, so it is not a credible escalation.
-- **Service-role server access:** rejected. A privileged secret is unnecessary
-  for public read-only Sample Data.
+- **Service-role server access:** rejected. The constrained command is exposed
+  through the publishable role and does not require a privileged secret.
 
 ## Consequences
 
 - Local development requires a Docker-compatible runtime for the Supabase stack.
-- Database grants/policies and denied mutations must be tested.
+- Database grants, denied direct mutations, and constrained command execution
+  must be tested.
 - The app remains useful if the summary is copied, but it cannot recover summary
   history after navigation or prove that anyone received it.
 - Authentication and persistent handoff require a later ADR once identity,

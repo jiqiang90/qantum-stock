@@ -1,6 +1,7 @@
 # ADR-002: Capability Modules in a Modular Monolith
 
-- Status: Accepted
+- Status: Accepted; internal module shape amended by
+  [ADR-004](ADR-004-simplify-readiness-module.md)
 - Date: 2026-10-02
 
 ## Context
@@ -13,14 +14,14 @@ unused abstractions.
 
 - Use one Next.js application organized by business capability.
 - Keep Material Readiness policy framework-independent.
-- Put list/detail orchestration in small application use cases.
+- Put list/detail orchestration in one small `ReadinessService`.
 - Define one narrow readiness repository port and implement it with Supabase.
 - Build Shortage Summary text with a pure function from an already calculated
   readiness assessment; do not add a persistence port.
 - Keep presentation responsible for interaction state and clipboard feedback,
   not readiness policy.
-- Use explicit constructor injection where a use case depends on the readiness
-  repository and policy Strategy.
+- Use explicit constructor injection where the service depends on the readiness
+  repository.
 - Prefer a class only when it encapsulates state, invariants, lifecycle, or
   polymorphism; use pure functions for stateless calculations.
 
@@ -39,6 +40,5 @@ server or class-per-table design.
   is covered by unit tests.
 - If persistent handoff is later approved, it becomes a new capability with its
   own command boundary rather than being hidden in the readiness query module.
-- The readiness Strategy boundary and its future reservation-aware variation are
-  defined in
-  [`ADR-003`](ADR-003-readiness-policy-strategy.md).
+- The flat module shape and removal of the hypothetical runtime Strategy are
+  recorded in [`ADR-004`](ADR-004-simplify-readiness-module.md).

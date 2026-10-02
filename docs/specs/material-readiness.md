@@ -2,7 +2,10 @@
 
 ## Decision
 
-The accepted First Slice is **A2: Readiness + Copy Shortage Summary**.
+The readiness baseline is **A2: Readiness + Copy Shortage Summary**. The accepted
+[`Scenario Solution Selection`](solution-selection.md) extension adds one
+persisted planning choice without changing this calculation or adding inventory
+reservation.
 
 It demonstrates the smallest coherent value path: inspect a planned Work
 Package, understand whether its required Products are available, select the
@@ -21,14 +24,17 @@ Operations task, or track resolution.
 
 ## Working assumptions
 
-1. The demo is public and read-only; no production Team Leader identity or
-   tenancy model is inferred from the brief.
-2. One Sample Work Package represents one planned scenario using one nominated
-   synthetic Solution.
-3. Product Requirements and Inventory Snapshots are independently authored
-   Sample Data. The brief says the catalogue includes required products, but the
-   received CSV contains no Product fields, usable Product mapping, or demand
-   quantities.
+1. The demo is public and assumes the current visitor is the Team Leader; no
+   production identity or tenancy model is inferred from the brief. Direct table
+   writes remain denied, with one constrained selected-Solution command defined
+   by the extension specification.
+2. One Work Package represents one planned Scenario with one selected
+   source-backed Solution Option from the selected Ryanfire catalogue subset.
+3. Solution Options, SolutionProduct associations, option-owned Product
+   Requirements, and Inventory Snapshots are independently authored synthetic
+   data. The brief says the catalogue includes required products, but the
+   received CSV contains no Product fields, usable Product mapping, Scenario
+   eligibility, or demand quantities.
 4. Each Product is a specific stock-tracked item with a unique synthetic Product
    Code, a specific name, and one canonical unit. Generic material descriptions
    and packaging units do not identify a Product. Required and available
@@ -42,36 +48,44 @@ Operations task, or track resolution.
 7. The optional note is trimmed, blank becomes absent, and the maximum length is
    500 characters.
 
-## Sample Data scenario design
+## Demo scenario design
 
-The received catalogue excerpt provides credible context for Solution variety:
-wall, floor, and ceiling orientations; pipe, conduit, cable, and structural
-services; and several substrate types. Each source row is still a Solution, not
-a Product Requirement or Inventory Snapshot. The seed therefore uses those
-dimensions to choose representative contexts without copying catalogue rows,
-supplier references, or internal codes.
+The First Slice is **Work Package-driven**: the Team Leader starts from planned
+work, then inspects its nominated Solution and Product evidence. Solution is
+context in this journey, not the navigation root or a formal bill of materials.
+The internal SolutionProduct association supports readiness evidence but is not
+presented as an approved catalogue or compliance decision. A Solution catalogue
+journey can be designed later if a real planning user and authoritative source
+are established.
 
-All Solution names, Products, Product Codes, mappings, quantities, and Inventory
-Snapshots below are synthetic. They exercise evidence handling and do not claim
-that a Product is approved or compliant for the described Solution.
+The seed preserves twelve exact Solution rows selected from the received
+catalogue excerpt. Four are nominated by the six Work Packages below; eight
+remain catalogue coverage only. Each source row is still a Solution, not a
+Product Requirement or Inventory Snapshot. Products, Product Codes, mappings,
+Work Packages, quantities, and Inventory Snapshots remain synthetic and do not
+claim that a Product is approved or compliant for a source-backed Solution.
 
-| Sample Work Package                          | Catalogue-inspired context          | Evidence setup                                       | Expected result                         |
-| -------------------------------------------- | ----------------------------------- | ---------------------------------------------------- | --------------------------------------- |
-| Wall penetration exactly supplied            | Plasterboard wall, PVC conduit      | One Product; required `10`, available `10`           | `READY` at the equality boundary        |
-| Wall penetration with multiple products      | Plasterboard wall, copper pipe      | Two Products; both quantities sufficient             | `READY` across multiple requirements    |
-| Concrete floor partial shortage              | Concrete floor, PVC pipe            | Required `12`, available `10`                        | `SHORTAGE`, missing `2`                 |
-| Timber floor with zero available             | Timber infill floor, PVC pipe       | Required `4`, available `0`                          | `SHORTAGE`; zero remains known evidence |
-| Cable tray with shortage and unresolved item | Plasterboard wall, cable tray       | One confirmed shortage plus one unmapped requirement | `SHORTAGE` takes precedence             |
-| Ceiling penetration with unmapped product    | Plasterboard ceiling, PVC pipe      | Product mapping absent                               | `UNKNOWN / PRODUCT_NOT_MAPPED`          |
-| Insulated pipe with unknown demand           | Plasterboard wall, insulated copper | Product mapped; required quantity absent             | `UNKNOWN / REQUIRED_QUANTITY_MISSING`   |
-| Cable bundle with no inventory evidence      | Plasterboard wall, cable bundle     | Product and demand known; Inventory Snapshot absent  | `UNKNOWN / INVENTORY_SNAPSHOT_MISSING`  |
-| Structural penetration awaiting requirements | Plasterboard wall, timber beam      | No Product Requirements yet                          | `UNKNOWN / NO_REQUIREMENTS`             |
+| Work Package                         | Product evidence                                                     | Expected result                                   |
+| ------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------- |
+| Level 2 service riser firestopping   | Collar `6/10`, sealant `4/8`, board `6/20`                           | `READY` across three Product Requirements         |
+| Level 3 east riser firestopping      | Collar `4/10`, sealant `6/8`, board `8/20`                           | `READY` across three Product Requirements         |
+| Level 1 timber floor penetrations    | Pipe wrap `4/0`, sealant `4/8`                                       | `SHORTAGE`; one blocker and one ready requirement |
+| Level 2 timber floor penetrations    | Pipe wrap `2/0`, sealant `10/8`                                      | `SHORTAGE`; two blockers                          |
+| East core cable tray opening         | Sealant `12/8`, board `3/20`, plus one unmapped requirement          | `SHORTAGE` takes precedence over `UNKNOWN`        |
+| Level 3 ceiling conduit penetrations | Conduit seal `6` with no snapshot, sealant with no required quantity | `UNKNOWN`; two distinct missing-evidence reasons  |
 
-The six Products have specific synthetic identities such as `SampleShield
-SC-100 Fire Collar` and `SampleSeal IS-310 Intumescent Sealant 310 ml`. The
-illustrative mapping keeps the collar with a PVC pipe context and the sealant
-with copper-pipe and cable contexts, but it remains Sample Data rather than a
-technical approval. Generic material descriptions and packaging units are not
+The first two Work Packages reuse one Solution, and the two timber-floor Work
+Packages reuse another. This demonstrates the intended `Solution 1:N Work
+Package` relationship instead of creating a unique Solution for every package.
+Although the first two packages are individually `READY`, selecting them
+together requires 10 sealant cartridges against one shared quantity of 8, so
+Aggregate Readiness exposes a shortage of 2 without allocating it to either
+package.
+The five Products have specific synthetic identities such as `SC-040 Fire
+Collar` and `IS-310 Intumescent Sealant 310 ml`. The
+illustrative mapping keeps the 40mm collar with the Ø40mm PVC pipe context and
+the sealant with pipe, cable, and conduit contexts, but it remains a synthetic
+assumption rather than a technical approval. Generic material descriptions and packaging units are not
 Product identities. Each Product owns one canonical unit; dependent quantities
 do not repeat or convert that unit. No Product Category entity is required by
 this slice.
@@ -80,15 +94,18 @@ this slice.
 
 ### Inputs
 
-- Sample Work Packages and their planned dates.
-- Synthetic Solutions and Products.
+- Work Packages and their planned dates.
+- Source-backed Solutions plus synthetic Products and SolutionProduct
+  associations.
 - Product Requirements with required quantities.
 - Latest Inventory Snapshots with available quantities and capture times.
+- An explicit selection of two or more Work Packages for aggregate comparison.
 - User-selected Blocking Requirements and an optional note.
 
 ### Outputs
 
 - Work Package Material Readiness: `READY`, `SHORTAGE`, or `UNKNOWN`.
+- Aggregate Readiness for selected Work Packages, grouped by Product.
 - Evidence for each Product Requirement.
 - A deterministic, selectable plain-text Shortage Summary.
 - Clipboard feedback that distinguishes `Copied` from `Sent`.
@@ -97,14 +114,17 @@ No runtime write is produced.
 
 ## User journey
 
-1. The Team Leader opens a list of Sample Work Packages and sees a text readiness
-   status for each one.
-2. They open a non-ready Work Package and inspect required, available, missing,
+1. The Team Leader opens a table of Work Packages with visible headings,
+   searches by Work Package or Solution evidence, filters by readiness status,
+   and can open detail from the full visual row.
+2. They may select two or more Work Packages to check whether their combined
+   Product demand fits the same latest Inventory evidence.
+3. They open a non-ready Work Package and inspect required, available, missing,
    and unknown evidence.
-3. They choose one or more Blocking Requirements and optionally add a note.
-4. The application previews a Shortage Summary built from the currently
+4. They choose one or more Blocking Requirements and optionally add a note.
+5. The application previews a Shortage Summary built from the currently
    displayed evidence.
-5. They copy the summary. If clipboard access fails, the text remains visible
+6. They copy the summary. If clipboard access fails, the text remains visible
    and selectable for manual copying.
 
 ## Functional requirements
@@ -144,14 +164,52 @@ is missing, or the Work Package has no Product Requirements. Dependency
 failures and missing Work Packages use explicit error/not-found states instead
 of `UNKNOWN`.
 
-### FR-2: Explain evidence
+### FR-2: Find and check Work Packages
+
+- A validated, shareable `q` parameter searches Work Package name plus visible
+  Solution identity and service evidence case-insensitively.
+- A validated, shareable `status` parameter filters by `READY`, `SHORTAGE`, or
+  `UNKNOWN`; invalid values fall back to all statuses.
+- The result count distinguishes the visible results from all available Work
+  Packages, and a filtered-empty state offers a direct reset.
+- Applying or resetting filters clears Work Package selection so hidden records
+  never continue contributing to Aggregate Readiness. Checking selected packages
+  preserves the active filters.
+
+- The Team Leader may select two or more Work Packages from the list.
+- Requirements are grouped by Product and their known required quantities are
+  summed once across the selection.
+- Each Product's latest Inventory Snapshot is compared once against the combined
+  demand; Inventory is not multiplied by the number of Work Packages.
+- If combined known demand exceeds available quantity, that Product and the
+  selection are `SHORTAGE` with the confirmed missing quantity.
+- Missing Product mapping, required quantity, Inventory Snapshot, or a Work
+  Package with no requirements remains `UNKNOWN` unless another Product already
+  proves a confirmed aggregate shortage.
+- Incomplete demand is displayed as `At least <known quantity>` when a known
+  subtotal exists.
+- The result does not reserve stock, allocate it, or decide which Work Package
+  receives it. Individual Work Package statuses continue to represent each
+  package considered on its own.
+- Selection uses validated, shareable GET parameters. Invalid and duplicate IDs
+  do not enter the calculation, and fewer than two available selections produce
+  useful guidance rather than an aggregate result.
+
+### FR-3: Explain evidence
+
+The Work Package detail page presents two primary sections in causal order:
+the nominated Solution first, then the Product Requirements assessed for that
+Work Package. A known Product already demonstrates the selected Solution-to-
+Product mapping, so mapped rows do not repeat the Solution identity. An unmapped
+requirement makes that exceptional state explicit. The page must not imply that
+a synthetic Product association proves compliance or approval.
 
 For every requirement, show its description, mapped Product name and Product
 Code when known, required quantity, available quantity, missing quantity when
 calculable, canonical unit, Inventory Snapshot time when present, status, and
 reason.
 
-### FR-3: Prepare summary
+### FR-4: Prepare summary
 
 - The action is available only for a Work Package with at least one `SHORTAGE`
   or `UNKNOWN` requirement.
@@ -173,8 +231,6 @@ MATERIAL SHORTAGE SUMMARY
 Work Package: <name>
 Planned date: <YYYY-MM-DD>
 Readiness: <SHORTAGE|UNKNOWN>
-Data: Sample Data demonstration
-
 Blocking requirements:
 - [<SHORTAGE|UNKNOWN>] <description>
   Product: <name|Unknown>
@@ -193,7 +249,7 @@ use the exact word `Unknown`; they are never rendered as zero, an empty string,
 or `N/A`. Duplicate selected requirement IDs are invalid rather than silently
 normalized.
 
-### FR-4: Copy honestly
+### FR-5: Copy honestly
 
 - A successful clipboard operation is labelled `Copied` and never `Sent`,
   `Reported`, or `Escalated`.
@@ -201,7 +257,7 @@ normalized.
   text for manual copying.
 - Copying does not create a durable record or imply a recipient received it.
 
-### FR-5: Represent UI states
+### FR-6: Represent UI states
 
 Loading, empty, not-found, dependency-failure, validation, clipboard-success,
 and clipboard-failure states must be explicit. None may imply readiness or
@@ -220,24 +276,34 @@ delivery when the evidence is unavailable.
 - **AC-5:** known Product evidence contains a specific name and Product Code;
   quantities for a Product share its canonical unit and no implicit conversion
   occurs.
-- **AC-6:** valid selected blockers produce the specified deterministic summary,
+- **AC-6:** searching by Work Package or Solution evidence and filtering by
+  readiness produce the expected shareable result set; applying filters clears
+  prior selection, and no-result recovery resets the filters.
+- **AC-7:** selecting two individually ready Work Packages whose combined demand
+  exceeds one shared Inventory Snapshot produces an aggregate `SHORTAGE`; the
+  Product total, available quantity, and missing quantity are visible without
+  assigning the shortage to either package.
+- **AC-8:** valid selected blockers produce the specified deterministic summary,
   including a trimmed note when supplied.
-- **AC-7:** empty selection, duplicate or unrelated IDs, ready requirements,
+- **AC-9:** empty selection, duplicate or unrelated IDs, ready requirements,
   malformed input, and a note over 500 characters are rejected with useful
   validation.
-- **AC-8:** copy success says only `Copied`; copy failure leaves a selectable
+- **AC-10:** copy success says only `Copied`; copy failure leaves a selectable
   fallback and never claims delivery.
-- **AC-9:** the complete journey works with keyboard navigation and at a narrow
+- **AC-11:** the complete journey works with keyboard navigation and at a narrow
   mobile viewport.
 
 ## Non-functional requirements
 
-- Supabase's public runtime role has read-only access to the required demo data.
+- Supabase's public runtime role has read access to required demo data and may
+  execute only the constrained selected-Solution command; direct table mutation
+  remains denied.
 - No service-role key is exposed to application or browser runtime.
 - Untrusted route/form data is validated with Zod at its boundary.
 - Domain and summary-building logic are framework-independent and unit-tested.
-- Sample Data is disclosed once at page/layout level instead of repeated as a
-  field on every database record.
+- The persistent header identifies the application as a demonstration. Record
+  names do not repeat `DEMO`; a repeated warning banner and per-record synthetic-
+  data field are unnecessary.
 - Errors shown to a public user do not expose database internals or secrets.
 - Persisted required and available quantities are non-negative; the domain
   calculation consumes this validated internal evidence.
@@ -248,8 +314,8 @@ delivery when the evidence is unavailable.
 - Persisted Shortage Reports, IDs, history, refresh recovery, or audit trail.
 - Recipient selection, Operations inbox, assignment, notification, delivery
   confirmation, or resolution.
-- Purchasing, transfers, alternative selection/approval, crew scheduling, and
-  field installation records.
+- Purchasing, transfers, approval of Solutions outside the eligible option set,
+  crew scheduling, and field installation records.
 - Live inventory, reservation, multiple locations, packaging, and unit
   conversion.
 - Offline synchronization and editing.

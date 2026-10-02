@@ -12,30 +12,38 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Mission and scope
 
-Build the first Team Leader value slice: review the Material Readiness of a
-Sample Work Package before travelling to site, understand Blocking Requirements,
-and prepare and copy a Shortage Summary.
+Build the first Team Leader value slice: choose an eligible Solution for a Work
+Package Scenario, review its Material Readiness before travelling to site,
+understand Blocking Requirements, and prepare and copy a Shortage Summary.
 
 The wider product context and capability roadmap live in
 `docs/product/overview.md`. The accepted First Slice contract is
-`docs/specs/material-readiness.md`. Technical boundaries and accepted decisions
-live in `docs/architecture/overview.md` and `docs/architecture/decisions/`.
+`docs/specs/material-readiness.md`; the accepted write extension is
+`docs/specs/solution-selection.md`; the approved supporting Product Explorer
+contract is `docs/specs/product-explorer.md`; the approved source-data
+correction is `docs/specs/source-backed-solutions.md`. Technical boundaries and
+accepted decisions live in `docs/architecture/overview.md` and
+`docs/architecture/decisions/`.
 Treat each document as authoritative for its concern. Do not expand the slice
-into authentication, persistent reports, recipients, assignment, notifications,
-purchasing, stock management, scheduling, Alternative-Solution approval,
+into real authentication, persistent reports, recipients, assignment,
+notifications, purchasing, reservation, allocation, stock management,
+scheduling, Alternative-Solution approval outside the eligible option set,
 offline sync, or administration.
 
 The supplied `data/solutions-excerpt.csv` is ignored local reference material
 and must not enter Git history or become a runtime dependency. Each row
 represents a Solution; `Internal Code` and `Supplier Ref. Code` identify that
-Solution and must not be reused as Product identifiers. Although the brief says
-the catalogue includes required products, the received CSV exposes no Product
-fields or Solution-to-Product relationship. The committed demo dataset and its
-user-facing surfaces must be clearly labelled as Sample Data. Synthetic
-Solutions, Products, Work Packages, Product Requirements, quantities, mappings,
-and inventory values must not copy supplied catalogue records. A Product is a
-specific stock-tracked item with its own synthetic Product Code and specific
-name; generic labels such as `Fire Collar` or `Fire Sealant`, and units such as
+Solution and must not be reused as Product identifiers. The approved twelve-row
+subset is copied field-for-field into the versioned seed and protected by tests;
+all other catalogue rows remain outside the slice. Although the brief says the
+catalogue includes required products, the received CSV exposes no Product fields
+or usable Solution-to-Product relationship. Product mappings, Work Packages,
+Product Requirements, quantities, and inventory values therefore remain
+explicit synthetic assumptions. The application header must identify the
+surface as a demonstration; do not repeat `DEMO` in every record identity, add
+another global warning, or add a flag to every row. A Product is a specific
+stock-tracked item with its own synthetic Product Code and specific name;
+generic labels such as `Fire Collar` or `Fire Sealant`, and units such as
 `cartridge`, are not Product identities. A matching catalogue field is never
 proof that a fire-stopping solution is compliant or approved.
 
@@ -52,24 +60,29 @@ proof that a fire-stopping solution is compliant or approved.
 
 ## Architecture
 
-- Keep a Next.js modular monolith organized by business capability.
-- Presentation adapters call application use cases. Read use cases depend on a
-  `ReadinessPolicy` Strategy and a small repository port; Supabase adapters
-  implement that port. Pure summary construction needs no repository
-  abstraction. Domain code never depends on a repository port.
+- Keep a Next.js modular monolith organized by business capability under
+  `src/modules`. Prefer a flat capability module until distinct submodules are
+  large enough to justify another directory level.
+- Next.js pages and route handlers are route/controller adapters. They validate
+  transport input, call one service operation, and translate not-found or error
+  outcomes; do not add pass-through controller classes.
+- Presentation adapters call the capability service. `ReadinessService` and
+  `ProductService` each depend on a small capability-specific repository port;
+  one Supabase adapter implements each port. Pure readiness and summary
+  calculations need no repository abstraction.
 - Domain and application code must not import Supabase, Next.js request/response
   types, or React.
 - Route handlers translate transport concerns and call one application use case;
   they do not contain business rules or direct database queries.
 - Repository ports belong beside the use case that consumes them. Keep them
   small and capability-specific.
-- `StandardReadinessPolicy` is the only First Slice runtime Strategy. A
-  `StubReadinessPolicy` may exist only in tests to prove substitutability. A
-  reservation-aware strategy is a documented future response to multi-project
-  shared inventory, not executable placeholder code.
-- Inject the readiness repository and `ReadinessPolicy` explicitly through
-  application-use-case constructors. Do not introduce a dependency-injection
-  framework, runtime Strategy factory, or separate Node service for this slice.
+- Express the delivered readiness algorithm as the pure
+  `assessReadiness(requirements)` function. Extract a Strategy only when a
+  second production algorithm, its evidence, and its runtime selection rule are
+  known.
+- Inject each repository explicitly through its capability service constructor.
+  Do not introduce a dependency-injection framework, runtime plugin factory,
+  customer-specific implementation, or separate Node service for this slice.
 - Prefer object-oriented design for domain entities, value objects, application
   use cases, ports, and adapters. Encapsulate invariants and inject dependencies
   through constructors.
@@ -128,12 +141,18 @@ proof that a fire-stopping solution is compliant or approved.
 - Each Product owns one canonical unit. First Slice requirement and inventory
   quantities are already expressed in that unit. Do not introduce packaging or
   unit-conversion behaviour; it is a documented Production Gap.
+- Aggregate Readiness groups selected Work Package demand by Product and counts
+  shared inventory once. It is a transient comparison only: do not reserve or
+  allocate stock, choose a winning Work Package, or overwrite individual
+  Work Package readiness.
 - Browser code may use only the public Supabase URL and publishable key.
 - Never expose or commit a service-role key.
-- The First Slice has no authenticated actor and performs no runtime database
-  write. Do not manufacture identity merely to persist a creator-only record.
-- Exposed Sample Data tables must permit the public role to read only the data
-  required by the demo and must reject insert, update, and delete.
+- The demonstration assumes the current visitor is a Team Leader authorized to
+  select an eligible Solution for every Work Package. Do not present this as a
+  production authentication or tenancy model.
+- Exposed synthetic-data tables must reject public insert, update, and delete.
+  The public role may execute only the constrained, conflict-aware selected-
+  Solution command defined by `docs/specs/solution-selection.md`.
 - The Shortage Summary exists only in presentation/application memory and the
   user's clipboard. It has no ID, recipient, delivery state, or audit claim.
 

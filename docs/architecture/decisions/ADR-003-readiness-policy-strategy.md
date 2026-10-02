@@ -1,6 +1,7 @@
 # ADR-003: Replaceable Material Readiness Policy
 
-- Status: Accepted
+- Status: Superseded by
+  [ADR-004](ADR-004-simplify-readiness-module.md)
 - Date: 2026-10-02
 
 ## Context

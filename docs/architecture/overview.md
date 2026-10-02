@@ -2,71 +2,79 @@
 
 ## Architectural focus
 
-The architecture exists to support one journey: read Work Package evidence,
-calculate Material Readiness, prepare a Shortage Summary, and copy it. It is a
-Next.js modular monolith with Supabase Postgres as a replaceable read-only data
-source.
+The implemented architecture supports Work Package and Product discovery plus
+individual and aggregate Material Readiness. It is a Next.js modular monolith
+with Supabase Postgres as the runtime data source.
 
-No authentication, persistence command, notification, queue, second service, or
-generic framework is justified by A2.
+Eligible Solution selection and the copyable Shortage Summary are designed next
+iterations, not executable capabilities in the current code. Their target seams
+are shown as Future below. Real authentication, reservation, notification,
+queue, second service, and generic frameworks remain unjustified.
 
 ## Module boundaries
 
 ```mermaid
 flowchart LR
-    UI[Next.js pages and components] --> Queries[Readiness query use cases]
-    Queries --> Policy[ReadinessPolicy Strategy]
-    Queries --> Port[Readiness repository port]
-    Standard[StandardReadinessPolicy] --> Policy
-    Future[Future: ProjectAllocatedReadinessPolicy] -.-> Policy
-    Adapter[Supabase readiness adapter] --> Port
-    Adapter --> DB[(Supabase Postgres)]
-    UI --> Summary[Shortage Summary builder]
-    Summary --> Policy
-    UI --> Clipboard[Browser Clipboard API]
+    UI[Next.js pages and components] --> RService[ReadinessService]
+    RService --> Rules[assessReadiness pure function]
+    RService --> RPort[Readiness repository port]
+    RAdapter[Supabase readiness adapter] --> RPort
+    RAdapter --> DB[(Supabase Postgres)]
+    UI -. Future .-> Select[Select Solution command]
+    Select -. Future .-> RService
+    UI --> PService[ProductService]
+    PService --> PPort[Product repository port]
+    PAdapter[Supabase Product adapter] --> PPort
+    PAdapter --> DB
+    UI -. Future .-> Summary[Shortage Summary builder]
+    Summary -. Future .-> Rules
+    UI -. Future .-> Clipboard[Browser Clipboard API]
 
     classDef core fill:#dff7e8,stroke:#176b42,stroke-width:2px,color:#102a1d;
     classDef boundary fill:#eef3ff,stroke:#355aa8,color:#102040;
-    classDef future fill:#fff,stroke:#777,stroke-dasharray:5 5,color:#444;
-    class Policy,Standard,Summary core;
-    class UI,Queries,Port,Adapter,DB,Clipboard boundary;
-    class Future future;
+    classDef future fill:#f8fafc,stroke:#64748b,stroke-dasharray:5 5,color:#334155;
+    class Rules core;
+    class UI,RService,RPort,RAdapter,PService,PPort,PAdapter,DB boundary;
+    class Select,Summary,Clipboard future;
 ```
 
-- **Domain:** framework-independent readiness types, rules, reasons, and
-  invariants.
-- **Application:** list/detail queries and a small capability-specific
-  repository port.
-- **Infrastructure:** Supabase query and row-to-domain translation.
-- **Presentation:** pages, interaction state, boundary validation, summary
-  preview, and clipboard feedback.
-- **Shortage Summary builder:** a pure function; it needs no repository or class
-  because it has no I/O, identity, or lifecycle.
+- **Readiness module:** a flat capability module containing framework-independent
+  models and rules, `ReadinessService`, its small repository port, the Supabase
+  adapter, and focused list/detail components. A bounded Solution-selection
+  operation is a designed-only extension.
+- **Product module:** a flat read-only capability containing Product evidence,
+  `ProductService`, its small repository port, the Supabase adapter, URL filter
+  boundaries, and focused list/detail components. Reverse usage traverses the
+  Solution-required Product mapping without presenting Solution compliance.
+- **Next.js app:** route/controller adapters, interaction state, boundary
+  validation, loading/not-found/error handling, and page composition.
+- **Future Shortage Summary builder:** designed as a pure function; it will need
+  no repository or class because it has no I/O, identity, or lifecycle.
 
-Dependencies point inward. Domain and application code do not import React,
-Next.js request/response types, or Supabase. A layer must own policy,
-orchestration, translation, or external integration; pass-through layers are not
-kept.
+Dependencies point from routes to the capability service and from the service to
+pure rules and the repository port. The Supabase adapter owns database
+translation. Pure business code does not import React, Next.js request/response
+types, or Supabase. A file must own policy, orchestration, translation, external
+integration, or focused presentation; pass-through layers are not kept.
 
-## Strategy and constructor-injection boundary
+## Service and constructor-injection boundary
 
-`ReadinessPolicy` is the domain Strategy contract.
-`StandardReadinessPolicy` implements the current `READY`, `SHORTAGE`, and
-`UNKNOWN` rules and is the only runtime Strategy in the First Slice. The
-credible future variation is multi-project shared inventory: a
-`ProjectAllocatedReadinessPolicy` may calculate usable stock after subtracting
-material reserved for other Work Packages. That future policy requires trusted
-reservation evidence and is not implemented by this submission.
+`ReadinessService` exposes list and detail operations. It receives the
+`ReadinessRepository` through explicit constructor injection, then applies the
+pure `assessReadiness` function to the returned evidence. Its tests use a
+controlled repository to prove orchestration without a dependency-injection
+framework.
 
-List/detail application use cases receive both `ReadinessRepository` and
-`ReadinessPolicy` through explicit constructor injection. Their tests use a
-controlled repository and `StubReadinessPolicy` to prove orchestration and
-substitutability. The stub is test-only evidence, not a second delivered
-business policy.
+`ProductService` follows the same constructor-injection boundary for Product
+list/detail operations. It owns search, evidence filtering, deterministic
+ordering, and the unique referencing-Work-Package count. Its Supabase adapter
+owns row translation, latest-snapshot selection, and ordered requirement usage.
 
-No runtime Strategy factory, customer/project resolver, tenancy field, or
-dependency-injection framework is introduced. Those require a real selection
-contract and a second production Strategy.
+The First Slice has one verified `READY`, `SHORTAGE`, and `UNKNOWN` algorithm.
+Changing the selected Solution changes its input requirements, not the
+algorithm. A future reservation-aware calculation needs trusted reservation
+data and ownership semantics. Until those exist, it remains a Production Gap
+rather than a plugin or executable Strategy.
 
 ## Readiness data flow
 
@@ -74,20 +82,20 @@ contract and a second production Strategy.
 sequenceDiagram
     actor TL as Team Leader
     participant Page as Next.js page
-    participant Query as Readiness query
+    participant Service as ReadinessService
     participant Repo as Supabase adapter
     participant DB as Supabase Postgres
-    participant Policy as ReadinessPolicy
+    participant Rules as assessReadiness
 
     TL->>Page: Open Work Package
-    Page->>Query: getWorkPackageReadiness(id)
-    Query->>Repo: findById(id)
-    Repo->>DB: Read package, requirements, products, latest snapshots
-    DB-->>Repo: Sample rows
-    Repo-->>Query: Domain input
-    Query->>Policy: assess(input)
-    Policy-->>Query: Status, evidence, reasons
-    Query-->>Page: Readiness view model
+    Page->>Service: findById(id)
+    Service->>Repo: findById(id)
+    Repo->>DB: Read package, Solution mappings, requirements, products, snapshots
+    DB-->>Repo: Synthetic rows
+    Repo-->>Service: Domain input
+    Service->>Rules: assessReadiness(requirements)
+    Rules-->>Service: Status, evidence, reasons
+    Service-->>Page: Readiness view model
     Page-->>TL: Explain READY / SHORTAGE / UNKNOWN
 ```
 
@@ -96,7 +104,92 @@ The adapter chooses the latest Inventory Snapshot deterministically by
 Product; an unmapped requirement cannot expose an orphan available quantity or
 snapshot time. Missing data remains missing; `0` remains numeric evidence.
 
-## Shortage Summary flow
+## Future selected Solution write flow — designed only
+
+```mermaid
+sequenceDiagram
+    actor TL as Team Leader
+    participant Page as Work Package detail
+    participant Service as ReadinessService
+    participant Repo as Supabase adapter
+    participant DB as Supabase Postgres command
+
+    TL->>Page: Preview eligible Solution Option
+    Page->>Service: assessOption(workPackageId, optionId)
+    Service-->>Page: Requirements and READY / SHORTAGE / UNKNOWN
+    TL->>Page: Use this Solution
+    Page->>Service: selectSolution(ids, expectedCurrentOptionId)
+    Service->>Repo: Persist validated selection
+    Repo->>DB: Conflict-aware constrained command
+    DB-->>Repo: Committed selection or conflict
+    Repo-->>Service: Current Work Package evidence
+    Service-->>Page: Recalculated assessment
+```
+
+Association with the Work Package makes a Solution selectable. This eligibility
+is synthetic operational data, not a conclusion derived from catalogue fields.
+The command changes only the selected option and does not reserve inventory.
+Its detailed contract and target data model are defined in the
+[`Scenario Solution Selection specification`](../specs/solution-selection.md).
+
+## Selected Work Package aggregate flow
+
+```mermaid
+sequenceDiagram
+    actor TL as Team Leader
+    participant Page as Work Package list
+    participant Service as ReadinessService
+    participant Repo as Supabase adapter
+    participant Rules as assessWorkPackageSelection
+
+    TL->>Page: Select two or more Work Packages
+    Page->>Service: list()
+    Service->>Repo: Read readiness evidence
+    Repo-->>Service: Assessed Work Packages
+    Service-->>Page: Individual readiness results
+    Page->>Rules: Assess selected Work Packages
+    Rules->>Rules: Group demand by Product and sum quantities
+    Rules->>Rules: Compare each Product once with shared inventory
+    Rules-->>Page: Product totals and aggregate status
+    Page-->>TL: READY / SHORTAGE / UNKNOWN comparison
+```
+
+The aggregate check is a transient comparison over the explicitly selected
+Work Packages. It counts each Product's latest Inventory Snapshot once, does
+not reserve or allocate stock, does not decide which Work Package receives a
+short Product, and does not change any individual Work Package status. Selection
+is held in validated GET parameters so the comparison is repeatable and
+shareable without adding persistence.
+
+## Product Explorer data flow
+
+```mermaid
+sequenceDiagram
+    actor TL as Team Leader
+    participant Page as Next.js Product page
+    participant Service as ProductService
+    participant Repo as Supabase Product adapter
+    participant DB as Supabase Postgres
+
+    TL->>Page: Open Product list or detail
+    Page->>Page: Validate URL input with Zod
+    Page->>Service: list(filters) or findById(id)
+    Service->>Repo: Read Product evidence
+    Repo->>DB: Select Products, Solution mappings, requirements, Work Packages
+    DB-->>Repo: Public synthetic rows
+    Repo-->>Service: Ordered Product evidence
+    Service-->>Page: Filtered list or detail
+    Page-->>TL: Product identity, Inventory, and usage
+```
+
+The Product query follows
+`Product <- SolutionProduct <- Product Requirement <- Work Package`.
+It uses the mapping only to recover Work Package usage and makes no approval or
+compliance claim. The list count deduplicates Work Packages, while detail
+preserves every Product Requirement. Search and evidence filters are validated
+GET parameters; malformed or multi-valued input falls back safely.
+
+## Future Shortage Summary flow — designed only
 
 ```mermaid
 sequenceDiagram
@@ -129,13 +222,26 @@ was sent, reported, escalated, received, or resolved.
 ```mermaid
 erDiagram
     SOLUTION ||--o{ WORK_PACKAGE : nominated_for
+    SOLUTION ||--o{ SOLUTION_PRODUCT : defines
+    PRODUCT ||--o{ SOLUTION_PRODUCT : identifies
     WORK_PACKAGE ||--o{ PRODUCT_REQUIREMENT : contains
-    PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_identify
+    SOLUTION_PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_source
     PRODUCT ||--o{ INVENTORY_SNAPSHOT : has
 
     SOLUTION {
         uuid id PK
-        text name
+        text internal_code UK
+        text supplier_ref_code
+        text supplier
+        text orientation
+        text substrate
+        text service_classification
+        text service_type
+        text service_size
+        text integrity
+        text insulation
+        text service_type_option
+        text substrate_option
     }
     WORK_PACKAGE {
         uuid id PK
@@ -147,13 +253,23 @@ erDiagram
         uuid id PK
         text product_code UK
         text name
+        text category
+        text manufacturer
+        text supplier_product_code
+        text variant
+        text description
         text canonical_unit
+    }
+    SOLUTION_PRODUCT {
+        uuid id PK
+        uuid solution_id FK
+        uuid product_id FK
     }
     PRODUCT_REQUIREMENT {
         uuid id PK
         uuid work_package_id FK
         integer position
-        uuid product_id FK "nullable"
+        uuid solution_product_id FK "nullable"
         text description
         numeric required_quantity "nullable, scale 3"
     }
@@ -165,38 +281,58 @@ erDiagram
     }
 ```
 
-The one nominated Solution per Work Package is a demo assumption, not a claim
-about the production planning model. Each Product represents a concrete
-stock-tracked item with a unique synthetic `product_code` and specific name;
-generic material descriptions and units are not Product identities. Supplied
+The diagram above represents the implemented read-only baseline. PF-004B
+migrates the fixed nominated Solution and Work-Package-owned requirements to
+Solution Options with option-owned requirements while keeping one selected
+option at a time. Each Product represents a concrete
+stock-tracked item with a unique synthetic `product_code`, specific name, flat
+category, manufacturer, supplier-facing code, variant, and description; generic
+material descriptions and units are not Product identities. These profile
+fields are synthetic Product data. The Solution table preserves twelve selected
+catalogue fields exactly and derives display labels rather than persisting an
+invented name. `supplier + internal_code` is the source identity; the UUID
+remains the relational key. `SolutionProduct` is an internal association
+recording the Product set assumed for the four operationally used Solutions
+without storing quantities; eight catalogue-only Solutions intentionally have no
+mapping. Quantities remain Work Package-specific Product Requirements. Supplied
 Solution `Internal Code` and `Supplier Ref. Code` values are never reused as
-Product Codes. `ProductRequirement.product_id` and `required_quantity` are
-nullable so the demo can explain `UNKNOWN`. Requirement and inventory rows do
-not repeat units; both quantities use the Product's canonical unit. The
+Product identifiers. `ProductRequirement.solution_product_id` is nullable so
+the demo can explain an unresolved mapping, and `required_quantity` is nullable
+so it can explain missing demand evidence. Database triggers enforce that each
+resolved requirement uses an association belonging to its Work Package's
+nominated Solution, including when either side is updated. Negative pgTAP
+tests protect both write paths. An unmapped requirement cannot store a
+quantity, because no Product-owned canonical unit is available to interpret it.
+Requirement and inventory rows do not repeat units; both
+quantities use the Product's canonical unit. The
 `position` field preserves the planned requirement order used by evidence and
 summary output. Persisted quantities use `numeric(12,3)` and domain arithmetic
 normalizes to the same
 three-decimal scale.
 
-There is no row-level `sample_data` flag because every runtime row in this demo
-is synthetic. A global Sample Data notice carries that meaning. There is no
-`source_reference` field because the First Slice has no real provenance source
-or consumer for it.
+There is no row-level synthetic-data flag. Solution fields come from the bounded
+source-backed subset, while Work Packages, Products, mappings, quantities, and
+Inventory Snapshots are synthetic by table and documented as such. The
+persistent demonstration header communicates the overall environment without
+repeated warning text or identity prefixes. A generic `source_reference` field
+would duplicate the explicit Internal Code, Supplier Ref. Code, and Supplier
+fields, so it is not introduced.
 
-## Read-only security boundary
+## Public demo security boundary
 
 - Application runtime uses only the Supabase URL and publishable key.
 - The public database role can select only the tables/views required by the
-  demo; it cannot insert, update, delete, execute a privileged write function,
-  or inspect unrelated schemas.
+  demo. Direct insert, update, and delete are currently denied. The designed
+  Solution-selection extension adds only one constrained, conflict-aware command.
 - No service-role key is present in browser, server runtime, CI logs, or source.
 - Server-side query code narrows results and maps database rows into domain
   input. Database errors are translated before reaching the public UI.
 - Clipboard content is user-visible before copying. The application does not
   read existing clipboard contents.
 
-This is proportionate protection for synthetic public demo data. It is not a
-production authorization or tenancy model.
+The public visitor is assumed to be the Team Leader for this demonstration.
+This is proportionate protection for synthetic demo data, not a production
+authorization or tenancy model.
 
 ## Important failure states
 
@@ -204,7 +340,10 @@ production authorization or tenancy model.
 | ------------------------------------------ | -------------------------------------------- |
 | Supabase unavailable                       | Dependency error; never infer `READY`        |
 | Work Package missing                       | Explicit not-found state                     |
+| Product missing or route ID malformed      | Product-specific not-found state             |
 | Product, demand, or inventory missing      | `UNKNOWN` with a specific reason             |
+| Selected Solution changed concurrently     | Conflict; reload current selection           |
+| Invalid or unrelated Solution Option       | Validation error; no state change            |
 | Invalid or unrelated blocker selection     | Validation error; no summary is produced     |
 | Clipboard unavailable or permission denied | Selectable summary plus manual-copy guidance |
 
@@ -223,5 +362,5 @@ consuming the existing readiness evidence. No unused port, table, route, or
 placeholder is created now.
 
 Other Production Gaps remain live inventory semantics, multiple locations,
-reservation, unit conversion, Alternative-Solution approval, scheduling, and
-offline synchronization.
+reservation and allocation, unit conversion, approval of Solutions outside the
+eligible option set, scheduling, and offline synchronization.
