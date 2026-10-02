@@ -17,8 +17,9 @@ detail, and reverse Work Package usage is also demonstrated against local
 demo data. Twelve Solution records preserve fields from the supplied Ryanfire
 catalogue excerpt; Work Packages, Product mappings, quantities, and inventory
 remain synthetic assumptions. Single-package and combined Shortage Summary
-interactions are implemented and locally verified. Database/browser CI stages,
-hosted reviewer credentials, and public deployment are not yet implemented.
+interactions are implemented and locally verified. The hosted schema and
+synthetic data have been provisioned; hosted reviewer credentials, automated
+browser CI, and public deployment evidence are not yet complete.
 
 ## Quick start
 
@@ -76,6 +77,22 @@ layout, and Product section overflow; database tests remain a separate
 Before running the Supabase-backed UI, copy `.env.example` to `.env.local` and
 populate it with the local or hosted public Supabase URL and publishable key.
 No service-role credential is required by the application.
+
+## Delivery workflow
+
+GitHub `CI` runs the application quality gate. A separate `Deploy` workflow can
+be started manually, or automatically after `CI` succeeds for a push to `main`.
+The automatic path deploys the exact CI revision through the Vercel REST API;
+the manual path is limited to `main` and reruns `npm run check` first. Both
+finish with an HTTP smoke check of the Work Package list at `/`.
+
+Configure `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` as secrets in
+the GitHub `production` Environment. Public Supabase runtime variables remain in
+Vercel and no privileged Supabase credential belongs in GitHub. Database
+migrations are deliberately separate from frontend deployment. After the
+GitHub secrets are configured, disable Vercel's native automatic deployment for
+`main` immediately before pushing this workflow; otherwise the push can create
+an ungated duplicate deployment.
 
 For the local authenticated browser journey, provide a local-only service-role
 key and temporary `E2E_TEAM_LEADER_EMAIL` and `E2E_TEAM_LEADER_PASSWORD`, then

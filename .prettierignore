@@ -5,6 +5,7 @@ node_modules
 out
 playwright-report
 test-results
+supabase/.temp
 package-lock.json
 docs/**/*.docx
 data/**/*.csv

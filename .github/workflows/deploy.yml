@@ -1,0 +1,172 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: >-
+      (github.event_name == 'workflow_dispatch' &&
+      github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+    env:
+      DEPLOY_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+    steps:
+      - name: Check out verified revision
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies for manual verification
+        if: github.event_name == 'workflow_dispatch'
+        run: npm ci
+
+      - name: Run manual quality gate
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run check
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: manual-build-placeholder
+
+      - name: Deploy production
+        id: deploy
+        shell: bash
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$VERCEL_TOKEN" || -z "$VERCEL_ORG_ID" || -z "$VERCEL_PROJECT_ID" ]]; then
+            echo "The GitHub production Environment is missing a required Vercel secret." >&2
+            exit 1
+          fi
+
+          request_file="$RUNNER_TEMP/vercel-deployment-request.json"
+          response_file="$RUNNER_TEMP/vercel-deployment-response.json"
+          status_file="$RUNNER_TEMP/vercel-deployment-status.json"
+
+          node --input-type=module <<'NODE' > "$request_file"
+          const [owner, repository] = process.env.GITHUB_REPOSITORY.split("/");
+          const payload = {
+            name: repository,
+            project: process.env.VERCEL_PROJECT_ID,
+            target: "production",
+            gitSource: {
+              type: "github",
+              org: owner,
+              repo: repository,
+              ref: "main",
+              sha: process.env.DEPLOY_SHA,
+            },
+          };
+
+          process.stdout.write(JSON.stringify(payload));
+          NODE
+
+          curl --fail-with-body --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --request POST \
+            "https://api.vercel.com/v13/deployments?teamId=${VERCEL_ORG_ID}" \
+            --header "Authorization: Bearer ${VERCEL_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data-binary "@${request_file}" \
+            > "$response_file"
+
+          deployment_id="$(node --input-type=module - "$response_file" <<'NODE'
+          import fs from "node:fs";
+
+          const response = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          if (typeof response.id !== "string" || response.id.length === 0) {
+            throw new Error("Vercel did not return a deployment ID.");
+          }
+          process.stdout.write(response.id);
+          NODE
+          )"
+
+          deployment_url=""
+          for attempt in {1..60}; do
+            curl --fail-with-body --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --retry 3 \
+              --retry-delay 2 \
+              "https://api.vercel.com/v13/deployments/${deployment_id}?teamId=${VERCEL_ORG_ID}" \
+              --header "Authorization: Bearer ${VERCEL_TOKEN}" \
+              > "$status_file"
+
+            status_line="$(node --input-type=module - "$status_file" <<'NODE'
+          import fs from "node:fs";
+
+          const response = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const state = response.readyState ?? "UNKNOWN";
+          const url = response.url ?? "";
+          process.stdout.write(`${state}\t${url}`);
+          NODE
+            )"
+            IFS=$'\t' read -r ready_state deployment_host <<< "$status_line"
+
+            case "$ready_state" in
+              READY)
+                if [[ -z "$deployment_host" ]]; then
+                  echo "Vercel marked the deployment ready without returning a URL." >&2
+                  exit 1
+                fi
+                deployment_url="https://${deployment_host}"
+                break
+                ;;
+              ERROR|CANCELED)
+                echo "Vercel deployment ${deployment_id} ended in state ${ready_state}." >&2
+                exit 1
+                ;;
+            esac
+
+            sleep 10
+          done
+
+          if [[ -z "$deployment_url" ]]; then
+            echo "Timed out waiting for the Vercel deployment." >&2
+            exit 1
+          fi
+
+          echo "deployment_url=${deployment_url}" >> "$GITHUB_OUTPUT"
+          echo "Deployed revision ${DEPLOY_SHA} to ${deployment_url}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke-check deployment
+        shell: bash
+        run: |
+          curl --fail --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --retry 5 \
+            --retry-all-errors \
+            --retry-delay 3 \
+            "${{ steps.deploy.outputs.deployment_url }}/" \
+            > /dev/null
