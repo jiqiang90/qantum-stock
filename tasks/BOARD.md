@@ -18,20 +18,20 @@ Only one implementation item should normally be `In Progress`.
 
 ## Work items
 
-| ID                                            | Independently verifiable outcome                         | Timebox   | Status  | Depends on              |
-| --------------------------------------------- | -------------------------------------------------------- | --------- | ------- | ----------------------- |
-| [PF-001](PF-001-project-foundation.md)        | Reproducible application and quality-tooling foundation  | Completed | Done    | None                    |
-| [PF-001A](PF-001A-repository-baseline.md)     | Reviewed local, remote, and first-CI baseline            | 15 min    | Done    | PF-001, approval        |
-| [PF-002](PF-002-readiness-domain.md)          | Framework-independent readiness decisions                | 35 min    | Done    | PF-001A                 |
-| [PF-002B](PF-002B-readiness-policy.md)        | Replaceable readiness policy with unchanged behaviour    | 20 min    | Done    | PF-002                  |
-| [PF-003](PF-003-local-supabase.md)            | Reproducible read-only local database and synthetic data | 60 min    | Done    | PF-002, Docker          |
-| [PF-003A](PF-003A-source-backed-solutions.md) | Source-backed Solution subset with bounded demo mappings | 75 min    | Verify  | PF-003, PF-004, PF-004A |
-| [PF-004](PF-004-readiness-experience.md)      | List/detail readiness experience backed by Supabase      | 75 min    | Verify  | PF-002B, PF-003         |
-| [PF-004A](PF-004A-product-explorer.md)        | Read-only Product discovery and Work Package usage       | 90 min    | Verify  | PF-003, PF-004          |
-| [PF-004B](PF-004B-solution-selection.md)      | Authenticated Solution selection and recalculation       | 150 min   | Verify  | PF-003A, PF-004         |
-| [PF-005](PF-005-shortage-summary.md)          | Combined report and copyable shortage summaries          | 90 min    | Verify  | PF-002, PF-004B         |
-| [PF-006](PF-006-verification-pipeline.md)     | First Slice E2E journey and local/CI verification        | 60 min    | Backlog | PF-003, PF-005          |
-| [PF-007](PF-007-public-delivery.md)           | Public deployment and independently checked evidence     | 60 min    | Backlog | PF-006, approval        |
+| ID                                            | Independently verifiable outcome                         | Timebox   | Status      | Depends on                  |
+| --------------------------------------------- | -------------------------------------------------------- | --------- | ----------- | --------------------------- |
+| [PF-001](PF-001-project-foundation.md)        | Reproducible application and quality-tooling foundation  | Completed | Done        | None                        |
+| [PF-001A](PF-001A-repository-baseline.md)     | Reviewed local, remote, and first-CI baseline            | 15 min    | Done        | PF-001, approval            |
+| [PF-002](PF-002-readiness-domain.md)          | Framework-independent readiness decisions                | 35 min    | Done        | PF-001A                     |
+| [PF-002B](PF-002B-readiness-policy.md)        | Replaceable readiness policy with unchanged behaviour    | 20 min    | Done        | PF-002                      |
+| [PF-003](PF-003-local-supabase.md)            | Reproducible read-only local database and synthetic data | 60 min    | Done        | PF-002, Docker              |
+| [PF-003A](PF-003A-source-backed-solutions.md) | Source-backed Solution subset with bounded demo mappings | 75 min    | Verify      | PF-003, PF-004, PF-004A     |
+| [PF-004](PF-004-readiness-experience.md)      | List/detail readiness experience backed by Supabase      | 75 min    | Verify      | PF-002B, PF-003             |
+| [PF-004A](PF-004A-product-explorer.md)        | Read-only Product discovery and Work Package usage       | 90 min    | Verify      | PF-003, PF-004              |
+| [PF-004B](PF-004B-solution-selection.md)      | Authenticated Solution selection and recalculation       | 150 min   | Verify      | PF-003A, PF-004             |
+| [PF-005](PF-005-shortage-summary.md)          | Combined report and copyable shortage summaries          | 90 min    | Verify      | PF-002, PF-004B             |
+| [PF-006](PF-006-verification-pipeline.md)     | Deferred automated E2E and CI verification               | Future    | Backlog     | PF-003, PF-005              |
+| [PF-007](PF-007-public-delivery.md)           | Public deployment and independently checked evidence     | 60 min    | In Progress | manual smoke gate, approval |
 
 ## Working rule
 
@@ -63,5 +63,8 @@ evidence.
 - **PF-005 First Slice:** eligible Solution selection, recalculated Material
   Readiness, and a validated copyable Shortage Summary form the accepted
   functional boundary.
+- **PF-006 deferral:** the current delivery uses documented manual browser
+  verification. The deterministic production-build E2E journey and its CI
+  integration remain future work and must not be presented as delivered.
 - **PF-007 submission gate:** CI, deployment, and public-runtime verification are
   recorded as separate evidence; none is inferred from configuration alone.

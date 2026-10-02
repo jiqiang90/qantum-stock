@@ -3,6 +3,15 @@
 - Timebox: 60 minutes
 - Depends on: PF-003 and PF-005
 
+## Deferral decision — 2026-10-03
+
+The user deferred this automated production-build browser journey to protect the
+take-home timebox. PF-007 may proceed with the existing application/database
+checks plus a documented manual end-to-end smoke check of the public deployment.
+This task remains the future home for deterministic Playwright coverage and CI
+integration; no acceptance item below is considered complete, and manual
+evidence must not be described as automated E2E coverage.
+
 ## Outcome
 
 One reproducible command and one GitHub Actions pipeline prove the accepted A2
