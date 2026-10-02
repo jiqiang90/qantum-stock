@@ -29,7 +29,7 @@ Only one implementation item should normally be `In Progress`.
 | [PF-004](PF-004-readiness-experience.md)      | List/detail readiness experience backed by Supabase      | 75 min    | Verify  | PF-002B, PF-003         |
 | [PF-004A](PF-004A-product-explorer.md)        | Read-only Product discovery and Work Package usage       | 90 min    | Verify  | PF-003, PF-004          |
 | [PF-004B](PF-004B-solution-selection.md)      | Authenticated Solution selection and recalculation       | 150 min   | Verify  | PF-003A, PF-004         |
-| [PF-005](PF-005-shortage-summary.md)          | Validated, previewable, copyable Shortage Summary        | 45 min    | Backlog | PF-002, PF-004B         |
+| [PF-005](PF-005-shortage-summary.md)          | Combined report and copyable shortage summaries          | 90 min    | Verify  | PF-002, PF-004B         |
 | [PF-006](PF-006-verification-pipeline.md)     | First Slice E2E journey and local/CI verification        | 60 min    | Backlog | PF-003, PF-005          |
 | [PF-007](PF-007-public-delivery.md)           | Public deployment and independently checked evidence     | 60 min    | Backlog | PF-006, approval        |
 

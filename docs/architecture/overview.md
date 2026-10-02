@@ -4,12 +4,15 @@
 
 The implemented architecture supports Work Package and Product discovery,
 individual and aggregate Material Readiness, eligible Solution preview, and an
-authenticated selected-Solution write. It is a Next.js modular monolith with
-Supabase Postgres and Auth as runtime dependencies.
+authenticated selected-Solution write. Aggregate Readiness is presented through
+an explicit Combined Availability mode on the Work Packages page rather than
+permanent selection controls in its default state. It is a Next.js modular
+monolith with Supabase Postgres and Auth as runtime dependencies.
 
-The copyable Shortage Summary is the next designed iteration. Production
-identity and authorization, reservation, notification, queue, second service,
-and generic frameworks remain unjustified.
+Copyable single-package and combined Shortage Summaries are implemented as
+transient browser interactions. Production identity and authorization,
+reservation, notification, queue, second service, and generic frameworks remain
+unjustified.
 
 ## Module boundaries
 
@@ -27,16 +30,13 @@ flowchart LR
     PService --> PPort[Product repository port]
     PAdapter[Supabase Product adapter] --> PPort
     PAdapter --> DB
-    UI -. Future .-> Summary[Shortage Summary builder]
-    Summary -. Future .-> Rules
-    UI -. Future .-> Clipboard[Browser Clipboard API]
+    UI --> Summary[Shortage Summary builder]
+    UI --> Clipboard[Browser Clipboard API]
 
     classDef core fill:#dff7e8,stroke:#176b42,stroke-width:2px,color:#102a1d;
     classDef boundary fill:#eef3ff,stroke:#355aa8,color:#102040;
-    classDef future fill:#f8fafc,stroke:#64748b,stroke-dasharray:5 5,color:#334155;
     class Rules core;
-    class UI,RService,RPort,RAdapter,PService,PPort,PAdapter,DB,Auth,Select boundary;
-    class Summary,Clipboard future;
+    class UI,RService,RPort,RAdapter,PService,PPort,PAdapter,DB,Auth,Select,Summary,Clipboard boundary;
 ```
 
 - **Readiness module:** a flat capability module containing framework-independent
@@ -49,8 +49,10 @@ flowchart LR
   Solution-required Product mapping without presenting Solution compliance.
 - **Next.js app:** route/controller adapters, interaction state, boundary
   validation, loading/not-found/error handling, and page composition.
-- **Future Shortage Summary builder:** designed as a pure function; it will need
-  no repository or class because it has no I/O, identity, or lifecycle.
+- **Shortage Summary builder:** pure functions with no repository or class
+  because summary composition has no I/O, identity, or lifecycle. The builders
+  consume already-calculated readiness assessments; they do not invoke the
+  readiness rules. Clipboard I/O remains inside a focused client component.
 
 Dependencies point from routes to the capability service and from the service to
 pure rules and the repository port. The Supabase adapter owns database
@@ -143,11 +145,12 @@ Its detailed contract and target data model are defined in the
 ```mermaid
 sequenceDiagram
     actor TL as Team Leader
-    participant Page as Work Package list
+    participant Page as Work Packages page
     participant Service as ReadinessService
     participant Repo as Supabase adapter
     participant Rules as assessWorkPackageSelection
 
+    TL->>Page: Enter Combined Availability mode
     TL->>Page: Select two or more Work Packages
     Page->>Service: list()
     Service->>Repo: Read readiness evidence
@@ -157,15 +160,33 @@ sequenceDiagram
     Rules->>Rules: Group demand by Product and sum quantities
     Rules->>Rules: Compare each Product once with shared inventory
     Rules-->>Page: Product totals and aggregate status
-    Page-->>TL: READY / SHORTAGE / UNKNOWN comparison
+    Page-->>TL: Combined Availability Report
 ```
 
-The aggregate check is a transient comparison over the explicitly selected
-Work Packages. It counts each Product's latest Inventory Snapshot once, does
-not reserve or allocate stock, does not decide which Work Package receives a
-short Product, and does not change any individual Work Package status. Selection
-is held in validated GET parameters so the comparison is repeatable and
-shareable without adding persistence.
+The Combined Availability Check is a transient comparison over the explicitly
+selected Work Packages. The default page state remains a browsing surface
+without checkboxes. `Check combined availability` switches that page into a
+validated multi-select mode; leaving the mode clears selection and restores the
+browse-only state.
+The calculated report is a modal presentation state, not a separate route or a
+persisted Report entity. Closing it removes the completed comparison attempt
+while preserving the validated filters and selected Work Package IDs for the
+next adjustment.
+It counts each Product's latest Inventory Snapshot once, does not reserve or
+allocate stock, does not decide which Work Package receives a short Product,
+and does not change any individual Work Package status. Selection is held in
+validated GET parameters so the comparison is repeatable and shareable without
+adding persistence.
+
+The current Next.js page is a Server Component: it loads evidence through
+`ReadinessService` and runs `assessWorkPackageSelection` in the server runtime.
+This is not a browser-side calculation. For the bounded demonstration it may
+read the complete Work Package list. At production scale, candidate discovery
+would be paginated and the repository would load evidence only for validated
+selected IDs before the same pure domain calculation runs. A future reservation
+command would require a transactional server-side boundary that rechecks
+availability and locks or records allocation atomically; it cannot trust an
+earlier report.
 
 ## Product Explorer data flow
 
@@ -196,17 +217,22 @@ compliance claim. The list count deduplicates Work Packages, while detail
 preserves every Product Requirement. Search and evidence filters are validated
 GET parameters; malformed or multi-valued input falls back safely.
 
-## Future Shortage Summary flow — designed only
+## Shortage Summary flows
 
 ```mermaid
 sequenceDiagram
     actor TL as Team Leader
-    participant UI as Work Package detail
+    participant UI as Work Package detail or Combined Availability report
     participant Builder as Summary builder
     participant Clip as Browser Clipboard API
 
-    TL->>UI: Select Blocking Requirements and add note
-    UI->>UI: Validate IDs and note boundary
+    alt Single Work Package
+        TL->>UI: Select Blocking Requirements and add note
+        UI->>UI: Validate requirement IDs and note boundary
+    else Combined Availability
+        TL->>UI: Prepare summary from visible blocking Product totals
+        UI->>UI: Validate selected Work Package IDs and report evidence
+    end
     UI->>Builder: Build from displayed assessment
     Builder-->>UI: Deterministic plain text
     UI-->>TL: Show selectable preview
@@ -316,7 +342,9 @@ including when either side is updated. Negative pgTAP
 tests protect the mapping paths. An unmapped requirement cannot store a
 quantity, because no Product-owned canonical unit is available to interpret it.
 Requirement and inventory rows do not repeat units; both
-quantities use the Product's canonical unit. The
+quantities use the Product's canonical unit. A Solution Option may contain only
+one mapped requirement for a given Product; multiple unresolved requirements
+remain valid while their Product identity is unknown. The
 `position` field preserves the planned requirement order used by evidence and
 summary output. Persisted quantities use `numeric(12,3)` and domain arithmetic
 normalizes to the same

@@ -16,9 +16,9 @@ read-only Product Explorer with URL-backed search, evidence filters, Product
 detail, and reverse Work Package usage is also demonstrated against local
 demo data. Twelve Solution records preserve fields from the supplied Ryanfire
 catalogue excerpt; Work Packages, Product mappings, quantities, and inventory
-remain synthetic assumptions. The Shortage Summary interaction,
-database/browser CI stages, hosted reviewer credentials, and public deployment
-are not yet implemented.
+remain synthetic assumptions. Single-package and combined Shortage Summary
+interactions are implemented and locally verified. Database/browser CI stages,
+hosted reviewer credentials, and public deployment are not yet implemented.
 
 ## Quick start
 
@@ -34,8 +34,11 @@ npm run dev
 Open `http://localhost:3000`.
 
 - `/` lists Work Packages and their Material Readiness.
-- Select two or more Work Packages on `/` to compare their combined Product
-  demand with shared Inventory evidence.
+- Choose `Check combined availability` on `/`, then select two or more Work
+  Packages to compare their combined Product demand with shared Inventory
+  evidence.
+- Open a non-ready Work Package to select Blocking Requirements, add an optional
+  note, and preview or copy its Shortage Summary.
 - `/products` lists Products and links to their Inventory and Work
   Package usage evidence.
 
@@ -66,8 +69,9 @@ npm run test:e2e
 
 Run `npm run check` for the application quality gate. Playwright covers public
 Solution preview, authenticated selection, the selected-Work-Package aggregate
-journey, narrow-screen layout, and Product section overflow; database tests
-remain a separate `npm run db:test` gate.
+journey, single-package and combined Shortage Summary copying, narrow-screen
+layout, and Product section overflow; database tests remain a separate
+`npm run db:test` gate.
 
 Before running the Supabase-backed UI, copy `.env.example` to `.env.local` and
 populate it with the local or hosted public Supabase URL and publishable key.
@@ -104,8 +108,9 @@ decisions, and execution evidence.
 2. Preview a different Solution publicly, sign in with the privately provided
    Demo Team Leader account, and persist the selection, then inspect its
    recalculated `READY`, `SHORTAGE`, or `UNKNOWN` evidence.
-3. Select `Level 2 service riser firestopping` and `Level 3 east riser
-firestopping`. Their aggregate view exposes shared demand without reserving
+3. On the Work Packages page, choose `Check combined availability`, then select
+   `Level 2 service riser firestopping` and `Level 3 east riser firestopping`.
+   Their Combined Availability Report exposes shared demand without reserving
    inventory.
 4. Open a package marked `SHORTAGE`, select its Blocking Requirements, and add an
    optional note.
@@ -114,8 +119,9 @@ firestopping`. Their aggregate view exposes shared demand without reserving
    text if clipboard access is unavailable.
 
 Solution selection and its bounded authentication are implemented by PF-004B.
-Aggregate Readiness is implemented by PF-004. The Shortage Summary steps are the
-PF-005 boundary and are not yet implemented.
+Aggregate Readiness is implemented by PF-004. PF-005 implements the explicit
+Combined Availability mode and the copyable single-package and combined
+Shortage Summary interactions.
 
 The supporting Product Explorer can be reviewed independently by opening
 `/products`, applying a search or evidence filter, then following a Product to
@@ -130,8 +136,9 @@ claim Product administration, location, reservation, or compliance semantics.
   Team Leader account is required for the constrained selected-Solution write.
   It does not reserve inventory or provide production role authorization,
   tenancy, or work ownership.
-- The designed Shortage Summary will be copied into an existing business
-  channel chosen by the user; that interaction is not implemented yet.
+- A Shortage Summary is transient, user-visible text that can be copied into an
+  existing business channel chosen by the user. The application does not store,
+  send, assign, or track delivery of it.
 - The supplied exercise brief and `data/solutions-excerpt.csv` catalogue are
   ignored local reference material and are not committed or required at runtime.
 - The seed preserves twelve selected Solution rows from the supplied catalogue,

@@ -63,7 +63,8 @@ expanded First Slice.
 
 It tests one coherent user outcome: a Team Leader can select an eligible
 Solution for planned work, understand whether its materials are available,
-persist that planning choice, or prepare accurate portable shortage evidence.
+persist that planning choice, check whether selected Work Packages can proceed
+together, or prepare accurate portable shortage evidence.
 The public demonstration is anonymously readable, while persisting a Solution
 selection requires a pre-provisioned Demo Team Leader account. Full-site
 authentication, real role authorization, tenancy, and work ownership remain
@@ -134,12 +135,12 @@ nodes are future capabilities.
 | Baseline CI workflow and observed run   | First Slice       | Implemented                      |
 | Material Readiness calculation          | First Slice       | Implemented                      |
 | Work Package list and evidence view     | First Slice       | Demonstrated with synthetic data |
-| Selected Work Package aggregate check   | First Slice       | Implemented                      |
+| Combined Availability Check and Report  | First Slice       | Implemented                      |
 | Read-only Product Explorer              | Supporting demo   | Demonstrated with synthetic data |
 | Eligible Solution Options               | First Slice       | Demonstrated with synthetic data |
 | Persisted selected Solution             | First Slice       | Implemented                      |
 | Demo sign-in and authenticated write    | First Slice       | Implemented                      |
-| Copyable Shortage Summary               | First Slice       | Designed only                    |
+| Copyable single and combined summaries  | First Slice       | Implemented                      |
 | Local Supabase demo data                | First Slice       | Implemented                      |
 | Hosted Supabase synthetic data          | First Slice       | Designed only                    |
 | Complete First Slice CI pipeline        | First Slice       | Designed only                    |
@@ -152,6 +153,12 @@ nodes are future capabilities.
 | Alternative-Solution approval           | Future            | Production Gap                   |
 
 Statuses change only when supported by implementation and verification evidence.
+
+The Aggregate Readiness calculation and report are implemented. The default
+Work Packages page is browse-only; `Check combined availability` explicitly
+enables multi-select mode on that same page. Single-package and combined
+shortage evidence can be previewed and copied without creating a persistent
+record or claiming delivery.
 
 The proposed construction-project workflow for Slice 2 is documented as
 assumptions in the

@@ -41,7 +41,9 @@ notification, create an Operations task, or track resolution.
    and packaging units do not identify a Product. Required and available
    quantities are already expressed in the Product's canonical unit; packaging
    and conversion are excluded. First Slice quantities use at most three decimal
-   places, and readiness arithmetic normalizes evidence to that scale.
+   places, and readiness arithmetic normalizes evidence to that scale. Within
+   one Solution Option, known demand for the same mapped Product is consolidated
+   into one Product Requirement; unresolved Product needs may remain separate.
 5. The latest Inventory Snapshot is the available quantity for this slice. No
    reservation, warehouse, or in-transit logic is implied.
 6. A copied Shortage Summary is transient. It is not stored, assigned, sent, or
@@ -101,13 +103,14 @@ this slice.
   associations.
 - Product Requirements with required quantities.
 - Latest Inventory Snapshots with available quantities and capture times.
-- An explicit selection of two or more Work Packages for aggregate comparison.
+- An explicit selection of two or more Work Packages made after entering
+  Combined Availability mode on the Work Packages page.
 - User-selected Blocking Requirements and an optional note.
 
 ### Outputs
 
 - Work Package Material Readiness: `READY`, `SHORTAGE`, or `UNKNOWN`.
-- Aggregate Readiness for selected Work Packages, grouped by Product.
+- A Combined Availability Report for selected Work Packages, grouped by Product.
 - Evidence for each Product Requirement.
 - A deterministic, selectable plain-text Shortage Summary.
 - Clipboard feedback that distinguishes `Copied` from `Sent`.
@@ -119,15 +122,24 @@ is the one separately specified write in this expanded First Slice.
 
 1. The Team Leader opens a table of Work Packages with visible headings,
    searches by Work Package or Solution evidence, filters by readiness status,
-   and can open detail from the full visual row.
-2. They may select two or more Work Packages to check whether their combined
-   Product demand fits the same latest Inventory evidence.
-3. They open a non-ready Work Package and inspect required, available, missing,
+   and can open detail from the full visual row. The default list does not show
+   selection controls.
+2. They may choose `Check combined availability` to switch the same page into
+   multi-select mode, search or filter candidates, select two or more Work
+   Packages, and compare their combined Product demand with the same latest
+   Inventory evidence.
+3. The application presents a Combined Availability Report in a modal dialog
+   and, when the result contains `SHORTAGE` or `UNKNOWN` evidence, offers a
+   copyable combined Shortage Summary. Closing the dialog returns to the same
+   selected Work Packages so the Team Leader can adjust and check again.
+4. They may instead open a non-ready Work Package and inspect required,
+   available, missing,
    and unknown evidence.
-4. They choose one or more Blocking Requirements and optionally add a note.
-5. The application previews a Shortage Summary built from the currently
+5. On the detail page, they choose one or more Blocking Requirements and
+   optionally add a note.
+6. The application previews a Shortage Summary built from the currently
    displayed evidence.
-6. They copy the summary. If clipboard access fails, the text remains visible
+7. They copy the summary. If clipboard access fails, the text remains visible
    and selectable for manual copying.
 
 ## Functional requirements
@@ -169,17 +181,26 @@ of `UNKNOWN`.
 
 ### FR-2: Find and check Work Packages
 
-- A validated, shareable `q` parameter searches Work Package name plus visible
+- On the default Work Package list, a validated, shareable `q` parameter searches Work Package name plus visible
   Solution identity and service evidence case-insensitively.
 - A validated, shareable `status` parameter filters by `READY`, `SHORTAGE`, or
   `UNKNOWN`; invalid values fall back to all statuses.
 - The result count distinguishes the visible results from all available Work
   Packages, and a filtered-empty state offers a direct reset.
-- Applying or resetting filters clears Work Package selection so hidden records
-  never continue contributing to Aggregate Readiness. Checking selected packages
-  preserves the active filters.
-
-- The Team Leader may select two or more Work Packages from the list.
+- The default list contains no Work Package selection controls. It exposes one
+  `Check combined availability` action that switches the same page into
+  Combined Availability mode.
+- Within that mode, the Team Leader may search or filter candidates and select
+  two or more Work Packages. Mode, selection, and filters use validated,
+  shareable GET parameters; applying filters removes hidden Work Packages from
+  the selection so they cannot contribute invisibly.
+- Leaving Combined Availability mode removes selection state and returns the
+  same page to its default browse-only list while preserving applicable search
+  and readiness filters.
+- Submitting a valid selection opens the Combined Availability Report as a
+  modal dialog. Closing it preserves visible selection and filters, removes the
+  completed comparison attempt from the URL, and returns focus to the check
+  action.
 - Requirements are grouped by Product and their known required quantities are
   summed once across the selection.
 - Each Product's latest Inventory Snapshot is compared once against the combined
@@ -194,9 +215,16 @@ of `UNKNOWN`.
 - The result does not reserve stock, allocate it, or decide which Work Package
   receives it. Individual Work Package statuses continue to represent each
   package considered on its own.
-- Selection uses validated, shareable GET parameters. Invalid and duplicate IDs
-  do not enter the calculation, and fewer than two available selections produce
-  useful guidance rather than an aggregate result.
+- Invalid and duplicate IDs do not enter the calculation, and fewer than two
+  available selections produce useful guidance rather than a report.
+- The browser submits selection intent only. A Next.js server route reads the
+  evidence and performs the pure Aggregate Readiness calculation; the browser
+  does not receive raw records and calculate the result itself.
+- For the current bounded dataset the server may load the complete readiness
+  list. A production-scale extension must paginate candidate discovery and load
+  only the selected Work Packages and their required evidence before applying
+  the same domain rule. Database-side aggregation is not required until measured
+  volume or a transactional reservation boundary justifies it.
 
 ### FR-3: Explain evidence
 
@@ -214,8 +242,9 @@ reason.
 
 ### FR-4: Prepare summary
 
-- The action is available only for a Work Package with at least one `SHORTAGE`
-  or `UNKNOWN` requirement.
+- The action is available from either a Work Package with at least one
+  `SHORTAGE` or `UNKNOWN` requirement, or a Combined Availability Report with
+  at least one `SHORTAGE` or `UNKNOWN` Product total.
 - Only Blocking Requirements belonging to that Work Package may be selected.
 - At least one Blocking Requirement must be selected.
 - The summary contains Work Package name, planned date, overall readiness,
@@ -225,6 +254,11 @@ reason.
   of click order.
 - Identical validated input produces identical text.
 - Summary construction does not read or write an external service.
+- A combined summary contains the selected Work Package names and dates,
+  combined status, and all `SHORTAGE` or `UNKNOWN` Product totals from the
+  visible report. It does not ask the user to reselect already aggregated rows.
+- Single and combined summaries use separate validated input shapes and share
+  only formatting rules that are genuinely common.
 
 The plain-text structure is fixed so implementation and tests do not invent
 different formats:
@@ -251,6 +285,26 @@ The `Note` line is omitted when the normalized note is absent. Unknown values
 use the exact word `Unknown`; they are never rendered as zero, an empty string,
 or `N/A`. Duplicate selected requirement IDs are invalid rather than silently
 normalized.
+
+The combined structure is also deterministic:
+
+```text
+COMBINED MATERIAL SHORTAGE SUMMARY
+Work Packages:
+- <name> — <YYYY-MM-DD>
+Combined availability: <SHORTAGE|UNKNOWN>
+Blocking products:
+- [<SHORTAGE|UNKNOWN>] <product name|Unmapped requirement>
+  Product code: <product code|Unknown>
+  Required: <quantity unit|At least quantity unit|Unknown>
+  Available: <quantity unit|Unknown>
+  Missing: <quantity unit|Unknown>
+  Inventory captured: <UTC ISO-8601 timestamp|Unknown>
+  Reason: <reason>
+```
+
+The combined summary has no optional note in this slice; its purpose is to copy
+the evidence already visible in the report without introducing another form.
 
 ### FR-5: Copy honestly
 
@@ -280,17 +334,20 @@ delivery when the evidence is unavailable.
   quantities for a Product share its canonical unit and no implicit conversion
   occurs.
 - **AC-6:** searching by Work Package or Solution evidence and filtering by
-  readiness produce the expected shareable result set; applying filters clears
-  prior selection, and no-result recovery resets the filters.
+  readiness produce the expected shareable result set; the default list has no
+  selection controls, `Check combined availability` switches the same page into
+  multi-select mode, and leaving that mode clears selection.
 - **AC-7:** selecting two individually ready Work Packages whose combined demand
   exceeds one shared Inventory Snapshot produces an aggregate `SHORTAGE`; the
-  Product total, available quantity, and missing quantity are visible without
-  assigning the shortage to either package.
-- **AC-8:** valid selected blockers produce the specified deterministic summary,
-  including a trimmed note when supplied.
-- **AC-9:** empty selection, duplicate or unrelated IDs, ready requirements,
-  malformed input, and a note over 500 characters are rejected with useful
-  validation.
+  Combined Availability mode shows the Product total, available quantity, and
+  missing quantity without assigning the shortage to either package.
+- **AC-8:** valid selected blockers produce the specified deterministic
+  single-package summary, including a trimmed note when supplied; a combined
+  shortage produces the specified deterministic combined summary.
+- **AC-9:** an empty blocker selection, duplicate or unrelated blocker IDs,
+  ready requirements, malformed summary input, and a note over 500 characters
+  are rejected with useful validation. Duplicate or malformed Work Package
+  query IDs are safely removed before Aggregate Readiness is calculated.
 - **AC-10:** copy success says only `Copied`; copy failure leaves a selectable
   fallback and never claims delivery.
 - **AC-11:** the complete journey works with keyboard navigation and at a narrow

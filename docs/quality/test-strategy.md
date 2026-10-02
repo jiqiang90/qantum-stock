@@ -24,11 +24,11 @@ Entries prefixed `Future` are designed test obligations, not current evidence.
 | Unrelated or stale Solution selection persists  | Command, service, and database tests               |
 | Product search/filter or usage count is wrong   | Product service and boundary tests                 |
 | Product usage or latest Inventory maps wrongly  | Product adapter and presentation tests             |
-| Wrong blockers enter the summary                | Future: summary-builder validation/unit tests      |
-| Summary text is incomplete or unstable          | Future: deterministic summary string tests         |
-| Note normalization exceeds contract             | Future: boundary schema and summary tests          |
-| UI implies a message was sent                   | Future: component tests and wording assertion      |
-| Clipboard is unavailable or denied              | Future: rejected clipboard boundary test           |
+| Wrong blockers enter the summary                | Summary-builder validation/unit tests              |
+| Summary text is incomplete or unstable          | Deterministic summary string tests                 |
+| Note normalization exceeds contract             | Boundary schema and summary tests                  |
+| UI implies a message was sent                   | Component tests and wording assertion              |
+| Clipboard is unavailable or denied              | Rejected clipboard boundary test                   |
 | End-to-end wiring or responsive access fails    | One Playwright journey plus keyboard/mobile review |
 | CI or production build differs from local       | Clean CI pipeline and `npm run build`              |
 
@@ -69,8 +69,8 @@ Supabase, or browser API.
   enums, whitespace, and overlong search values cannot reach the repository
   unchecked. Product adapter tests prove ordered reverse usage, numeric zero,
   missing evidence, and the equal-time snapshot ID tie-break.
-- Future summary-builder tests will accept only Blocking Requirements from the
-  current assessment, normalize the note, and prove exact deterministic text,
+- Summary-builder tests accept only Blocking Requirements from the current
+  assessment, normalize the note, and prove exact deterministic text,
   Work Package ordering, duplicate rejection, `Unknown` rendering, optional-note
   omission, and UTC ISO-8601 timestamps.
 
@@ -110,7 +110,12 @@ The currently implemented Playwright journeys cover:
 
 - selecting the two individually ready riser Work Packages and proving that
   their shared sealant demand is displayed as `10 cartridge` required, `8
-cartridge` available, and `2 cartridge` missing; and
+cartridge` available, and `2 cartridge` missing;
+- entering and exiting same-page Combined Availability mode and copying its
+  shortage evidence without implying delivery or reservation;
+- opening one shortage Work Package, selecting a blocker, adding a note,
+  previewing the deterministic summary, and copying it without implying that it
+  was sent;
 - navigating between Product detail sections without introducing vertical page
   overflow;
 - previewing a Solution anonymously without persistence at a narrow viewport;
@@ -121,13 +126,22 @@ cartridge` available, and `2 cartridge` missing; and
 These tests protect concrete route and responsive behavior without repeating
 every domain case.
 
-A future Shortage Summary journey will cover:
+A single-package Shortage Summary journey covers:
 
-`list -> shortage Work Package -> evidence -> select blocker -> add note -> preview -> copy`
+`shortage Work Package detail -> evidence -> select blocker -> add note -> preview -> copy`
 
-It will verify summary content and confirm the UI never claims it was sent.
+It verifies summary content and confirms the UI never claims it was sent.
 Clipboard success may be stubbed deterministically; the failure fallback belongs
 at the presentation boundary.
+
+A separate Combined Availability journey covers:
+
+`list -> Check combined availability -> select two packages -> report -> copy summary`
+
+It verifies that the default list has no selection controls, the same page
+enters and exits validated Combined Availability mode, the report opens as a
+modal and closes back to the preserved selection, shared inventory is counted
+once, and copied evidence neither claims delivery nor reservation.
 
 The Solution-selection journey uses environment-provided credentials and a
 localhost-only provisioning script. Product adapter and aggregate regression
