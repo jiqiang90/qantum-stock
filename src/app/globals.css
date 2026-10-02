@@ -17,7 +17,19 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  background: var(--background);
+  background:
+    linear-gradient(rgb(244 241 233 / 92%), rgb(244 241 233 / 96%)),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 47px,
+      rgb(15 23 42 / 5%) 48px
+    );
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Aptos, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+::selection {
+  background: #a7f3d0;
+  color: #17201c;
 }

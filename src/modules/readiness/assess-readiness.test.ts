@@ -1,20 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  assessReadiness,
+  assessWorkPackageSelection,
+} from "./assess-readiness";
+import {
   type ProductReference,
-  type ReadinessPolicy,
   type RequirementEvidenceInput,
-  StandardReadinessPolicy,
-} from "./readiness";
+  type WorkPackageReadiness,
+} from "./readiness-model";
 
 const mappedProduct: ProductReference = {
   id: "product-fire-collar",
-  productCode: "DEMO-SC-100",
-  name: "SampleShield SC-100 Fire Collar",
+  productCode: "SC-100",
+  name: "SC-100 Fire Collar",
   canonicalUnit: "each",
 };
-
-const policy: ReadinessPolicy = new StandardReadinessPolicy();
 
 function requirement(
   overrides: Partial<RequirementEvidenceInput> = {},
@@ -32,17 +33,17 @@ function requirement(
   };
 }
 
-describe("StandardReadinessPolicy", () => {
+describe("assessReadiness", () => {
   it("marks a non-empty Work Package ready when every requirement is satisfied", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement(),
       requirement({
         id: "requirement-fire-compound",
         description: "Apply fire compound to the remaining openings",
         product: {
           id: "product-fire-compound",
-          productCode: "DEMO-FC-20",
-          name: "SampleCompound FC-20 Fire Compound",
+          productCode: "FC-020",
+          name: "FC-020 Fire Compound",
           canonicalUnit: "kg",
         },
         requiredQuantity: 2.5,
@@ -76,7 +77,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("marks a known deficit as a shortage and reports the decimal quantity missing", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({
         requiredQuantity: 3.75,
         inventorySnapshot: {
@@ -101,7 +102,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("treats quantities equal to three decimal places as ready", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({
         requiredQuantity: 0.1 + 0.2,
         inventorySnapshot: {
@@ -124,7 +125,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("reports a decimal shortage to three decimal places", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({
         requiredQuantity: 0.3,
         inventorySnapshot: {
@@ -139,7 +140,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("gives a confirmed shortage precedence while retaining unknown evidence", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({
         id: "requirement-confirmed-shortage",
         requiredQuantity: 10,
@@ -199,7 +200,7 @@ describe("StandardReadinessPolicy", () => {
   ] as const)(
     "marks $name as unknown with its canonical reason",
     ({ input, reason }) => {
-      const result = policy.assess([input]);
+      const result = assessReadiness([input]);
 
       expect(result.status).toBe("UNKNOWN");
       expect(result.requirements[0]).toEqual(
@@ -222,7 +223,7 @@ describe("StandardReadinessPolicy", () => {
   );
 
   it("gives unknown evidence precedence over otherwise ready requirements", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({ id: "requirement-ready" }),
       requirement({
         id: "requirement-missing-snapshot",
@@ -238,7 +239,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("does not treat a Work Package with no requirements as ready", () => {
-    expect(policy.assess([])).toEqual({
+    expect(assessReadiness([])).toEqual({
       status: "UNKNOWN",
       reason: "NO_REQUIREMENTS",
       requirements: [],
@@ -246,7 +247,7 @@ describe("StandardReadinessPolicy", () => {
   });
 
   it("preserves zero as known evidence", () => {
-    const result = policy.assess([
+    const result = assessReadiness([
       requirement({
         id: "requirement-zero-demand",
         requiredQuantity: 0,
@@ -284,3 +285,122 @@ describe("StandardReadinessPolicy", () => {
     ]);
   });
 });
+
+describe("assessWorkPackageSelection", () => {
+  it("detects shared-stock contention across individually ready Work Packages", () => {
+    const result = assessWorkPackageSelection([
+      selectedWorkPackage("work-package-a", [
+        requirement({
+          id: "requirement-a",
+          requiredQuantity: 6,
+          inventorySnapshot: {
+            availableQuantity: 10,
+            capturedAt: "2026-10-02T00:00:00.000Z",
+          },
+        }),
+      ]),
+      selectedWorkPackage("work-package-b", [
+        requirement({
+          id: "requirement-b",
+          requiredQuantity: 6,
+          inventorySnapshot: {
+            availableQuantity: 10,
+            capturedAt: "2026-10-02T00:00:00.000Z",
+          },
+        }),
+      ]),
+    ]);
+
+    expect(result).toEqual({
+      status: "SHORTAGE",
+      workPackageIds: ["work-package-a", "work-package-b"],
+      products: [
+        {
+          product: mappedProduct,
+          knownRequiredQuantity: 12,
+          requiredQuantityIncomplete: false,
+          availableQuantity: 10,
+          missingQuantity: 2,
+          inventoryCapturedAt: "2026-10-02T00:00:00.000Z",
+          status: "SHORTAGE",
+          reason: "INSUFFICIENT_QUANTITY",
+        },
+      ],
+      unmappedRequirementCount: 0,
+      workPackagesWithoutRequirements: 0,
+    });
+  });
+
+  it("keeps incomplete Product demand unknown when known demand still fits", () => {
+    const result = assessWorkPackageSelection([
+      selectedWorkPackage("work-package-a", [
+        requirement({ id: "known", requiredQuantity: 6 }),
+      ]),
+      selectedWorkPackage("work-package-b", [
+        requirement({ id: "unknown", requiredQuantity: null }),
+      ]),
+    ]);
+
+    expect(result.status).toBe("UNKNOWN");
+    expect(result.products[0]).toEqual(
+      expect.objectContaining({
+        knownRequiredQuantity: 6,
+        requiredQuantityIncomplete: true,
+        availableQuantity: 12,
+        missingQuantity: null,
+        status: "UNKNOWN",
+        reason: "REQUIRED_QUANTITY_MISSING",
+      }),
+    );
+  });
+
+  it("gives a confirmed aggregate shortage precedence over unresolved evidence", () => {
+    const result = assessWorkPackageSelection([
+      selectedWorkPackage("work-package-a", [
+        requirement({ requiredQuantity: 13 }),
+      ]),
+      selectedWorkPackage("work-package-b", [
+        requirement({
+          id: "unmapped",
+          product: null,
+          requiredQuantity: null,
+          inventorySnapshot: null,
+        }),
+      ]),
+    ]);
+
+    expect(result.status).toBe("SHORTAGE");
+    expect(result.unmappedRequirementCount).toBe(1);
+    expect(result.products[0]?.status).toBe("SHORTAGE");
+  });
+});
+
+function selectedWorkPackage(
+  id: string,
+  requirements: readonly RequirementEvidenceInput[],
+): WorkPackageReadiness {
+  return {
+    workPackage: {
+      id,
+      name: `Work Package ${id}`,
+      plannedDate: "2026-10-08",
+      solution: {
+        id: `solution-${id}`,
+        internalCode: "0444",
+        supplierRefCode: "V21.2-21SFR00051-98-A",
+        supplier: "Ryanfire",
+        orientation: "Wall",
+        substrate: "FR plasterboard, FR plasterboard wall (1 layer 13mm)",
+        serviceClassification: "Combustible Pipe",
+        serviceType: "PVC Pipe",
+        serviceSize: "Ø40mm",
+        integrity: "60",
+        insulation: "60",
+        serviceTypeOption: "PVC Pipe",
+        substrateOption: "Plasterboard Wall",
+      },
+      requirements,
+    },
+    assessment: assessReadiness(requirements),
+  };
+}

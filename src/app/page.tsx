@@ -1,22 +1,57 @@
-export default function Home() {
+import { PageHeading } from "@/components/page-heading";
+import { assessWorkPackageSelection } from "@/modules/readiness/assess-readiness";
+import { createReadinessService } from "@/modules/readiness/create-readiness-service";
+import {
+  parseWorkPackageListFilters,
+  parseWorkPackageSelection,
+} from "@/modules/readiness/readiness-boundaries";
+import { WorkPackageList } from "@/modules/readiness/work-package-list";
+import { WorkPackageListControls } from "@/modules/readiness/work-package-list-controls";
+import { filterWorkPackages } from "@/modules/readiness/work-package-list-filters";
+import { WorkPackageSelectionSummary } from "@/modules/readiness/work-package-selection-summary";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const filters = parseWorkPackageListFilters(params);
+  const selection = parseWorkPackageSelection(params);
+  const readiness = createReadinessService();
+  const allItems = await readiness.list();
+  const items = filterWorkPackages(allItems, filters);
+  const availableIds = new Set(items.map(({ workPackage }) => workPackage.id));
+  const selectedIds = selection.ids.filter((id) => availableIds.has(id));
+  const selectedItems = items.filter(({ workPackage }) =>
+    selectedIds.includes(workPackage.id),
+  );
+  const aggregateAssessment =
+    selectedItems.length >= 2
+      ? assessWorkPackageSelection(selectedItems)
+      : null;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl items-center px-6 py-16">
-      <section aria-labelledby="page-title" className="max-w-2xl space-y-5">
-        <p className="text-sm font-semibold tracking-[0.18em] text-emerald-800 uppercase">
-          Team leader workspace
-        </p>
-        <h1
-          id="page-title"
-          className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-6xl"
-        >
-          Material readiness
-        </h1>
-        <p className="text-lg leading-8 text-slate-700">
-          The project foundation is ready. The first business slice will help
-          team leaders check planned work and prepare a clear shortage summary
-          before travelling to site.
-        </p>
-      </section>
-    </main>
+    <div>
+      <PageHeading
+        eyebrow="Team Leader workspace"
+        title="Material readiness"
+        description="Review packages individually or select multiple packages to check their combined demand against shared Inventory evidence."
+      />
+      <WorkPackageListControls filters={filters} />
+
+      {aggregateAssessment === null ? null : (
+        <WorkPackageSelectionSummary assessment={aggregateAssessment} />
+      )}
+      <WorkPackageList
+        filters={filters}
+        items={items}
+        selectedIds={selectedIds}
+        selectionAttempted={selection.attempted}
+        totalCount={allItems.length}
+      />
+    </div>
   );
 }
