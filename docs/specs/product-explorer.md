@@ -5,7 +5,7 @@
 - Status: Approved
 - Approved: Yes, by the user on 2026-10-02
 - Iterations: 1
-- Last updated: 2026-10-02
+- Last updated: 2026-10-03
 - Repository: `passivefire`
 - Domain: Product catalogue and Work Package evidence
 - Related First Slice: [Material Readiness](material-readiness.md)
@@ -27,10 +27,10 @@ Readiness + Copy Shortage Summary boundary.
 **Primary persona:** Team Leader reviewing material evidence before travelling
 to site.
 
-**Desired outcome:** move from a Product shown in a Work Package to a stable
-Product identity and latest Inventory evidence, with the Work Packages that
-reference it available as secondary context rather than competing with the
-Product's own information.
+**Desired outcome:** move from a Product shown in a Work Package to stable
+Product identity and profile information, with latest Inventory evidence and
+the Work Packages that reference it grouped in a secondary usage view where
+available and required quantities can be understood together.
 
 Success is observable when the user can navigate both directions without
 confusing Work Package usage with a physical location, formal Solution bill of
@@ -50,9 +50,12 @@ materials, stock reservation, or compliance approval.
 - Latest Inventory Snapshot evidence selected deterministically by
   `captured_at DESC, id DESC`.
 - Reverse usage through
-  `Product -> SolutionProduct -> Product Requirement -> Work Package`, showing
-  Work Package name, planned date, requirement description, and required
-  quantity.
+  `Product -> SolutionProduct -> Product Requirement -> Solution Option -> Work Package`,
+  showing Work Package name, planned date, requirement description, and
+  required quantity for current selected options only.
+- Informational required quantity across the usage rows. Known quantities are
+  summed, while requirements without a quantity are reported separately and
+  never discarded or treated as zero.
 - Product search by name or Product Code.
 - Product filters for usage evidence and Inventory Snapshot evidence.
 - Shared navigation, page-heading, and empty/no-results UI components where a
@@ -69,9 +72,10 @@ materials, stock reservation, or compliance approval.
   specification documents, approvals, or compliance claims.
 - Site, building, level, zone, warehouse, bin, or physical-location semantics.
 - Inventory editing, reservation, allocation, transfer, ordering, or history UI.
-- An automatic Product-wide result across all Work Packages. The First Slice's
-  explicit selected-Work-Package comparison remains owned by Material
-  Readiness, not Product Explorer.
+- An automatic Product-wide readiness, shortage, remaining-stock, or allocation
+  result across all Work Packages. The informational total does not assume the
+  Work Packages run together; explicit selected-Work-Package comparison remains
+  owned by Material Readiness.
 - Pagination, client-side caching, or a generic configurable table framework.
 
 ## Deferred ideas
@@ -91,13 +95,14 @@ The delivered relationship is:
 Product
   <- SolutionProduct
       <- Product Requirement
-          <- Work Package
+          <- selected Solution Option
+              <- Work Package
 ```
 
-The Product detail heading is **Used in Work Packages**. It must not say
-"locations", "sites", "approved Solutions", or "required by this Solution".
-A Product's presence in Work Package evidence is not approval for the
-nominated Solution.
+The secondary section is labelled **Work Package usage (n)**. Its table is
+accessible as **Work Package usage** and must not say "locations", "sites",
+"approved Solutions", or "required by this Solution". A Product's presence in
+Work Package evidence is not approval for the nominated Solution.
 
 ## Routes and interaction
 
@@ -143,13 +148,18 @@ The page shows:
 
 1. Persistent Product identity: name and Product Code.
 2. A **Product details** tab, selected by default, containing description,
-   Product Category, Manufacturer, Supplier Product Code, Product Variant,
-   canonical unit, and the latest Inventory Snapshot: available quantity and
-   captured time, or an explicit `Unknown` evidence state.
-3. A secondary **Work Package usage (n)** tab containing **Used in Work
-   Packages:** one entry per referencing Product Requirement, ordered by Work
-   Package planned date, Work Package name, requirement position, and
-   requirement ID.
+   Product Category, Manufacturer, Supplier Product Code, Product Variant, and
+   canonical unit.
+3. A secondary **Work Package usage (n)** tab containing the latest Inventory
+   Snapshot once—available quantity and captured time, or an explicit `Unknown`
+   evidence state—and the total required quantity across all listed Product
+   Requirements, followed directly by a semantic table with one row per
+   referencing Product Requirement. The summary preserves the known quantity
+   total and separately counts requirements with an unknown quantity. An
+   incomplete subtotal is labelled **Known required**, and is `Unknown` when no
+   requirement quantity is known; `0` is shown only when there are no usage
+   rows. Rows are ordered by Work Package planned date, Work Package name,
+   requirement position, and requirement ID.
 
 The selected section is represented in the URL. Product details uses the clean
 `/products/[id]` URL; Work Package usage uses `?tab=usage`. Missing, repeated,
@@ -158,9 +168,14 @@ navigation links styled as tabs, rather than a client-only ARIA tab widget, so
 refresh, sharing, back/forward navigation, and native link keyboard behaviour
 remain available without hydration.
 
-Each usage entry shows the Work Package name as a link, planned date,
-requirement description, and required quantity in the Product's canonical unit.
-It does not expose SolutionProduct as navigation or infer compliance approval.
+Each usage row shows the Work Package name as a link whose hit area covers the
+visual row, planned date, requirement description, and required quantity in the
+Product's canonical unit. Product-level available and total required quantities
+are not repeated per row. The view does not calculate remaining stock or expose
+SolutionProduct as navigation or infer compliance approval. The tab label is
+the only visible usage count and counts unique Work Packages, not requirement
+rows; duplicate section headings are omitted. A concise visible note states that
+the summary does not reserve stock or assume concurrent work.
 
 ### Work Package detail
 
@@ -187,9 +202,11 @@ Product-specific controls and views stay under `src/modules/product`:
 
 - `ProductListControls` owns the Product query contract and labels.
 - `ProductList` and `ProductListItem` render Product discovery results.
-- `ProductDetail` renders persistent identity, section navigation, the selected
-  Product details panel, or the existing usage list.
-- `ProductUsageList` renders the reverse Work Package relationship.
+- `ProductDetail` renders persistent identity, section navigation, and the
+  selected profile or usage view.
+- `ProductUsageList` derives the informational total required quantity, renders
+  it beside one latest Inventory evidence summary, and renders the reverse Work
+  Package relationship table.
 
 Do not introduce a universal card, table, form-builder, or configuration-driven
 entity renderer. Readiness status components remain owned by the Readiness
@@ -295,8 +312,9 @@ catalogue.
   deterministic ordering, and filter combinations.
 - Adapter: latest-snapshot selection, numeric zero, missing snapshot, no usages,
   and multiple requirements across Work Packages.
-- Presentation: product links, identity, known/unknown evidence, usage list,
-  unfiltered empty state, filtered-empty state, and reset action.
+- Presentation: product links, identity, known/unknown evidence, total required
+  aggregation, usage list, unfiltered empty state, filtered-empty state, and
+  reset action.
 - Runtime: list returns all five Products; Product detail returns its
   latest snapshot and linked Work Packages; malformed/missing ID shows not-found.
 - E2E: PF-006 may extend its one journey with Work Package -> Product -> Work
@@ -309,10 +327,11 @@ catalogue.
 - [ ] `/products` lists all five Products in deterministic order.
 - [ ] Search and filters follow the documented URL contract and expose a useful
       filtered-empty recovery state.
-- [ ] `/products/[id]` prioritises Product identity and latest Inventory
-      evidence by default, with every referencing Work Package requirement
-      available through the secondary URL-driven usage tab in deterministic
-      order.
+- [ ] `/products/[id]` prioritises Product identity and profile information by
+      default, with latest Inventory evidence and every referencing Work Package
+      requirement available through the secondary URL-driven usage tab in
+      deterministic order. The usage summary preserves the known total and
+      explicitly counts any requirement quantities that remain unknown.
 - [ ] Work Package and Product detail pages link to each other for known Product
       evidence.
 - [ ] No Product or Solution administration, physical-location, reservation,
@@ -332,8 +351,8 @@ catalogue.
 
 ## Risks and mitigations
 
-- **Risk:** "Used in" is mistaken for physical location or formal compatibility.
-  **Mitigation:** use the exact **Used in Work Packages** heading and omit
+- **Risk:** usage is mistaken for physical location or formal compatibility.
+  **Mitigation:** use the exact **Work Package usage** table label and omit
   Solution aggregation from the Product page.
 - **Risk:** latest inventory is mistaken for reserved or globally available
   stock. **Mitigation:** retain the existing synthetic data and no-reservation copy;

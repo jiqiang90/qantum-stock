@@ -262,7 +262,7 @@ describe("Product detail evidence", () => {
       within(sections).getByRole("link", { name: "Product details" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
-      within(sections).getByRole("link", { name: "Work Package usage (2)" }),
+      within(sections).getByRole("link", { name: "Work Package usage (1)" }),
     ).toHaveAttribute("href", "/products/product-detail?tab=usage");
     expect(
       screen.getByRole("heading", { name: "Product details" }),
@@ -279,30 +279,43 @@ describe("Product detail evidence", () => {
       name: "Product sections",
     });
     expect(
-      within(sections).getByRole("link", { name: "Work Package usage (2)" }),
+      within(sections).getByRole("link", { name: "Work Package usage (1)" }),
     ).toHaveAttribute("aria-current", "page");
     expect(
       within(sections).getByRole("link", { name: "Product details" }),
     ).not.toHaveAttribute("aria-current");
     expect(
-      screen.getByRole("heading", { name: "Used in Work Packages" }),
+      screen.getByRole("table", { name: "Work Package usage" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Product details" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows Product identity and known zero Inventory evidence", () => {
+  it("keeps Product details focused on Product-owned profile evidence", () => {
     render(<ProductDetail product={product} />);
 
     expect(
       screen.getByRole("heading", { name: product.name }),
     ).toBeInTheDocument();
     expect(screen.getByText("PW-050")).toBeInTheDocument();
-    expect(screen.getByText("0 roll")).toBeInTheDocument();
     expect(
-      screen.getByText("About Inventory evidence").closest("details"),
-    ).not.toHaveAttribute("open");
+      screen.queryByRole("region", { name: "Product usage summary" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("0 roll")).not.toBeInTheDocument();
+  });
+
+  it("shows known zero Inventory evidence once in Work Package usage", () => {
+    render(<ProductDetail product={product} activeTab="usage" />);
+
+    const inventory = screen.getByRole("region", {
+      name: "Product usage summary",
+    });
+    expect(within(inventory).getByText("0 roll")).toBeInTheDocument();
+    expect(
+      within(inventory).getByText(/Captured 2 Oct 2026/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("0 roll")).toHaveLength(1);
   });
 
   it("shows Product-owned catalogue attributes in Product details", () => {
@@ -316,18 +329,38 @@ describe("Product detail evidence", () => {
   });
 
   it("shows unknown Inventory evidence without implying zero", () => {
-    render(<ProductDetail product={{ ...product, inventorySnapshot: null }} />);
+    render(
+      <ProductDetail
+        activeTab="usage"
+        product={{ ...product, inventorySnapshot: null }}
+      />,
+    );
 
-    expect(screen.getByText("Unknown")).toBeInTheDocument();
+    const summary = screen.getByRole("region", {
+      name: "Product usage summary",
+    });
+    expect(
+      within(summary).getByText("Available").parentElement,
+    ).toHaveTextContent("Unknown");
     expect(screen.queryByText("0 roll")).not.toBeInTheDocument();
   });
 
-  it("shows every requirement and links each usage to its Work Package", () => {
+  it("shows every requirement in a linked Work Package usage table", () => {
     render(
-      <ProductUsageList unit={product.canonicalUnit} usages={product.usages} />,
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={product.usages}
+      />,
     );
 
-    expect(screen.getByText("2 Product Requirements")).toBeInTheDocument();
+    const table = screen.getByRole("table", { name: "Work Package usage" });
+    expect(
+      within(table)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).toEqual(["Work Package", "Requirement", "Planned", "Required"]);
+    expect(within(table).getAllByRole("row")).toHaveLength(3);
     expect(screen.getByText("Wrap pipe penetration")).toBeInTheDocument();
     expect(
       screen.getByText("Wrap second pipe penetration"),
@@ -340,27 +373,121 @@ describe("Product detail evidence", () => {
     ).toHaveAttribute("href", "/work-packages/work-package-one");
     expect(screen.getAllByText("9 Oct 2026")).toHaveLength(2);
     expect(screen.queryByText("10 Oct 2026")).not.toBeInTheDocument();
-  });
-
-  it("uses singular requirement copy for one usage", () => {
-    render(
-      <ProductUsageList
-        unit={product.canonicalUnit}
-        usages={[product.usages[0]!]}
-      />,
-    );
-
-    expect(screen.getByText("1 Product Requirement")).toBeInTheDocument();
     expect(
-      screen.queryByText("1 Product Requirements"),
+      screen.queryByText(/Product Requirements?$/),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Used in Work Packages" }),
     ).not.toBeInTheDocument();
   });
 
-  it("shows an explicit no-usage state", () => {
-    render(<ProductUsageList unit="each" usages={[]} />);
+  it("totals known requirement quantities across Work Package usage", () => {
+    render(
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={product.usages.map((usage, index) => ({
+          ...usage,
+          requiredQuantity: index === 0 ? 4 : 3,
+        }))}
+      />,
+    );
+
+    const summary = screen.getByRole("region", {
+      name: "Product usage summary",
+    });
+    const totalRequired =
+      within(summary).getByText("Total required").parentElement;
+
+    expect(totalRequired).toHaveTextContent("7 roll");
+  });
+
+  it("shows known demand and annotates requirement quantities that remain unknown", () => {
+    render(
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={product.usages}
+      />,
+    );
+
+    const summary = screen.getByRole("region", {
+      name: "Product usage summary",
+    });
+    const totalRequired =
+      within(summary).getByText("Known required").parentElement;
+
+    expect(totalRequired).toHaveTextContent("4 roll");
+    expect(totalRequired).toHaveTextContent(
+      "1 requirement has unknown quantity",
+    );
+  });
+
+  it("shows unknown rather than a zero subtotal when every requirement quantity is unknown", () => {
+    render(
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={[product.usages[1]]}
+      />,
+    );
+
+    const knownRequired = screen.getByText("Known required").parentElement;
+    expect(knownRequired).toHaveTextContent("Unknown");
+    expect(knownRequired).not.toHaveTextContent("0 roll");
+    expect(knownRequired).toHaveTextContent(
+      "1 requirement has unknown quantity",
+    );
+  });
+
+  it("pluralises the annotation when multiple requirement quantities are unknown", () => {
+    render(
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={[
+          ...product.usages,
+          {
+            ...product.usages[1],
+            requirementId: "requirement-three",
+          },
+        ]}
+      />,
+    );
 
     expect(
+      screen.getByText("2 requirements have unknown quantity"),
+    ).toBeInTheDocument();
+  });
+
+  it("shows Inventory evidence with an explicit no-usage state", () => {
+    render(
+      <ProductUsageList inventorySnapshot={null} unit="each" usages={[]} />,
+    );
+
+    expect(
+      screen.getByRole("region", { name: "Product usage summary" }),
+    ).toHaveTextContent("AvailableUnknown");
+    const totalRequired = screen.getByText("Total required").parentElement;
+    expect(totalRequired).toHaveTextContent("0 each");
+    expect(
       screen.getByText("No Work Packages reference this Product"),
+    ).toBeInTheDocument();
+  });
+
+  it("states that the usage summary is informational rather than reserved stock", () => {
+    render(
+      <ProductUsageList
+        inventorySnapshot={product.inventorySnapshot}
+        unit={product.canonicalUnit}
+        usages={product.usages}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "Informational across listed Work Packages; does not reserve stock or assume concurrent work.",
+      ),
     ).toBeInTheDocument();
   });
 });

@@ -8,6 +8,43 @@
 latest Inventory evidence, and navigate every Work Package requirement
 that references it.
 
+## Usage-table follow-up — 2026-10-03
+
+The approved information hierarchy keeps Product-owned profile attributes in
+`Product details` and moves the single latest Inventory Snapshot into `Work
+Package usage`, where available quantity can be read beside requirement demand.
+The usage tab renders a semantic table with Work Package, requirement, planned
+date, and required quantity columns. It does not repeat Product-level inventory
+for every requirement row, and it removes the redundant `Requirement evidence`,
+`Used in Work Packages`, and Product Requirement count headings.
+
+Acceptance for this follow-up:
+
+- [x] Product details contains no Inventory quantity or captured-time panel.
+- [x] Work Package usage shows one explicit known, zero, or unknown latest
+      Inventory evidence state above the usage table.
+- [x] Every Product Requirement remains a distinct, linked table row.
+- [x] The tab label remains the single visible count of unique Work Packages;
+      multiple requirements in one Work Package do not inflate it.
+
+### Total-required follow-up — 2026-10-03
+
+The usage summary also shows the informational required quantity across the
+listed Product Requirements. Known quantities are summed in the Product's
+canonical unit. Requirements with unknown quantities are counted and annotated
+beside the known total rather than erasing it or being treated as zero. No usage
+rows produce a known zero. This does not calculate remaining stock, readiness,
+allocation, reservation, or concurrent scheduling.
+
+- [x] Fully known requirement quantities produce one `Total required` quantity.
+- [x] Unknown requirement quantities retain the known sum and produce a
+      singular or plural annotation count under `Known required`.
+- [x] An unknown-only set displays `Unknown`, never a misleading zero.
+- [x] No usage rows produce a known zero total while retaining the no-usage
+      state.
+- [x] A concise visible note states that this cross-package summary neither
+      reserves Inventory nor assumes concurrent work.
+
 **Architecture:** Add a flat `src/modules/product` capability with a pure
 filtering service, a narrow repository port, and one Supabase adapter. Next.js
 pages validate route/query input and render Product-specific components. Extract
@@ -77,8 +114,9 @@ evidence; current verification uses the five-Product source-aligned seed.
 - `src/modules/product/product-list-controls.tsx` — semantic GET search/filter
   form.
 - `src/modules/product/product-list.tsx` — result and filtered-empty rendering.
-- `src/modules/product/product-detail.tsx` — identity and Inventory evidence.
-- `src/modules/product/product-usage-list.tsx` — reverse Work Package usage.
+- `src/modules/product/product-detail.tsx` — identity and profile evidence.
+- `src/modules/product/product-usage-list.tsx` — latest Inventory evidence and
+  reverse Work Package usage table.
 - Co-located `*.test.ts` and `*.test.tsx` files protect each responsibility.
 
 ### Shared and integration surfaces
@@ -381,94 +419,23 @@ verification evidence, and a human-review checklist.
 
 ## Verification and evidence
 
-- Written Product Explorer specification approved by the user on 2026-10-02.
-- Detailed native-execution plan approved; implementation started on
-  2026-10-02 in the current working tree without a Git commit boundary.
-- Task 1 RED: the focused suite failed because `product-service` did not exist.
-- Task 1 GREEN: 7 focused Product service tests passed; the complete suite then
-  passed with 6 files and 30 tests.
-- Task 2 RED: both focused suites failed because the Product boundary and
-  Supabase adapter modules did not exist.
-- Task 2 GREEN: 15 Product tests passed across 3 files and TypeScript reported
-  no errors. Public Supabase read configuration now lives in shared
-  infrastructure rather than coupling Product to Readiness.
-- Task 3 framework constraint: the installed Next.js 16 documentation confirms
-  that `params` and `searchParams` are promises, `searchParams` may contain
-  arrays, `Link` is the primary internal navigation component, and `notFound()`
-  terminates rendering by throwing to the nearest not-found boundary.
-- Task 3 RED: Product presentation imports were unresolved and the existing
-  Work Package evidence rendered Product names as plain text.
-- Task 3 GREEN: 47 Product and Readiness tests passed across 9 files; lint and
-  TypeScript both reported no errors.
-- User-approved UI correction on 2026-10-02 removed the repeated global data
-  Data notice and nonessential explanatory copy. Both list pages now use
-  semantic tables with visible headings and one keyboard-focusable link whose
-  hit area covers each visual row; optional Inventory context is a closed native
-  disclosure.
-- UI correction RED: focused presentation tests failed because the list
-  components had no tables or table rows and Product detail had no disclosure.
-  UI correction GREEN: 12 focused presentation tests passed, followed by all 47
-  application tests.
-- Browser verification at desktop width showed aligned headings and columns for
-  both lists. Clicking a non-link Inventory or Solution cell navigated to the
-  correct detail, proving the visual row hit area.
-- Complete automated gate on 2026-10-02: database reset succeeded; 3 database
-  files and 40 assertions passed; formatting, lint, type checking, 9 application
-  files and 47 tests, and the production build passed; the dependency audit
-  found 0 vulnerabilities; `git diff --check` reported no errors.
-- Production-runtime checks against reset local Supabase confirmed all six
-  Product Codes, combined search/usage/inventory filters, known zero versus
-  unknown Inventory evidence, Product-to-Work-Package usage, Work-Package-to-
-  Product navigation, and not-found content for malformed or absent Product
-  IDs.
-- Review found no runtime write, privileged Supabase key, direct Solution query,
-  generic entity framework, or N+1 Product query. All hand-written files remain
-  below 500 lines. PF-004A is ready for the remaining human keyboard and
-  responsive-readability sign-off; no commit has been created.
-- Detail-page navigation now uses one shared semantic breadcrumb for Products
-  and Work Packages. RED presentation tests proved the old back-link labels
-  could not satisfy the new navigation contract; 14 focused tests passed after
-  the shared component and compact Work Package Solution metadata were added.
-- Desktop and 390-pixel rendered checks confirmed both breadcrumbs, the compact
-  Solution metadata, and truncation of long current-item labels without document
-  overflow. The complete suite passed with 9 files and 49 tests.
-- The UI reuse review extracted only the thin table structure and presentation
-  formatters shared by Product and Work Package pages. Domain components still
-  own their columns, links, status, and evidence semantics; no configurable
-  generic table framework was introduced.
-- Product filters now use native selects with a consistently positioned custom
-  arrow. Desktop lists retain visible column headings, while widths below the
-  desktop breakpoint render each row as labelled fields instead of hiding data
-  or requiring horizontal scrolling. Table cells expose their values to
-  assistive technology rather than replacing them with labels.
-- Date-only Work Package values now format in UTC, preventing New Zealand
-  timezone conversion from moving the planned date forward by one day.
-- UI correction RED: two singular-count tests failed on the one-requirement
-  label. UI correction GREEN: both focused suites passed with 18 tests;
-  the complete gate then passed with 9 files and 53 tests, including formatting,
-  lint, type checking, and a production build. The dependency audit found 0
-  vulnerabilities and `git diff --check` reported no errors.
-- Rendered checks at 1440 and 390 pixels confirmed centred filter arrows,
-  readable desktop columns, complete narrow-screen labelled rows, and planned
-  dates of 6, 7, and 9 Oct 2026 on Product usage evidence.
-- User-approved hierarchy correction makes Product information the default
-  detail view and moves reverse Work Package usage into a secondary URL-driven
-  tab. The navigation remains server-rendered links rather than introducing
-  client state or a custom ARIA tab widget.
-- User-approved Product profile enhancement adds flat Product Category,
-  Manufacturer, Supplier Product Code, Product Variant, and description fields.
-  All values are synthetic Product data; no supplied Solution catalogue field
-  enters the runtime model. The later SolutionProduct association is explicitly
-  synthetic and is not presented as approval evidence.
-- Product-profile RED evidence: the focused mapper/component run failed in 2
-  tests because the five profile fields were absent; the schema contract failed
-  10 assertions because the columns did not yet exist.
-- Product-profile GREEN evidence: local database reset succeeded; 3 database
-  files and 51 assertions passed; the complete application gate passed with 9
-  files and 62 tests plus formatting, lint, type checking, and production build.
-  Schema lint reported no errors, the dependency audit found 0 vulnerabilities,
-  and `git diff --check` reported no whitespace errors.
-- Rendered desktop and 390-pixel checks confirmed the Product profile remains
-  the primary content, Inventory evidence stays visually secondary, known zero
-  remains distinct from `Unknown`, and the narrow layout has no horizontal
-  overflow.
+- The approved Product Explorer was built test-first across service, boundary,
+  Supabase adapter, and presentation layers. Focused RED failures preceded each
+  implementation increment.
+- Reset local Supabase checks covered discoverability, filters, deterministic
+  latest evidence, known zero versus unknown, Product-to-Work-Package links,
+  reverse navigation, and invalid or absent Product IDs.
+- Shared UI remains limited to breadcrumbs, table structure, and presentation
+  formatters with two concrete consumers; Product-specific semantics stay in
+  the Product module.
+- Rendered desktop and 390-pixel checks covered row navigation, native filter
+  arrows, semantic table headings, labelled narrow rows, breadcrumbs, date-only
+  formatting, Product profile hierarchy, and horizontal overflow.
+- Product usage follow-ups moved Inventory evidence beside demand, added the
+  usage table and known-quantity aggregate, and preserved unknown quantities as
+  explicit annotations rather than zero.
+- Final review corrected unique Work Package counting, incomplete aggregate
+  language, unknown-only display, semantic description-list grouping, and the
+  visible no-reservation/no-concurrency boundary.
+- The final canonical gate, focused Product browser journey, dependency audit,
+  diff check, and authored-file size check are rerun immediately before commit.

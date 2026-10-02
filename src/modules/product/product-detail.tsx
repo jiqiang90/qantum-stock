@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
-import { formatNumber, formatTimestamp } from "@/lib/presentation/formatters";
 import type { ProductDetailTab } from "./product-boundaries";
 import type { ProductEvidence } from "./product-model";
 import { ProductUsageList } from "./product-usage-list";
@@ -13,6 +12,10 @@ export function ProductDetail({
   readonly product: ProductEvidence;
   readonly activeTab?: ProductDetailTab;
 }) {
+  const workPackageCount = new Set(
+    product.usages.map((usage) => usage.workPackage.id),
+  ).size;
+
   return (
     <>
       <header>
@@ -34,13 +37,14 @@ export function ProductDetail({
       <ProductSectionNavigation
         activeTab={activeTab}
         productId={product.id}
-        usageCount={product.usages.length}
+        usageCount={workPackageCount}
       />
 
       {activeTab === "details" ? (
         <ProductDetailsPanel product={product} />
       ) : (
         <ProductUsageList
+          inventorySnapshot={product.inventorySnapshot}
           unit={product.canonicalUnit}
           usages={product.usages}
         />
@@ -125,56 +129,20 @@ function ProductDetailsPanel({
         {product.description}
       </p>
 
-      <div className="mt-5 grid items-start gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)]">
-        <dl className="grid gap-px overflow-hidden rounded-2xl border border-slate-300 bg-slate-200 shadow-sm sm:grid-cols-2">
-          <ProductAttribute label="Category" value={product.category} />
-          <ProductAttribute label="Variant" value={product.variant} />
-          <ProductAttribute label="Manufacturer" value={product.manufacturer} />
-          <ProductAttribute
-            label="Supplier Product Code"
-            value={product.supplierProductCode}
-          />
-          <ProductAttribute
-            label="Canonical unit"
-            value={product.canonicalUnit}
-            wide
-          />
-        </dl>
-
-        <section
-          aria-labelledby="latest-inventory-title"
-          className="rounded-2xl border border-l-4 border-slate-300 border-l-emerald-700 bg-white p-5 shadow-sm sm:p-6"
-        >
-          <h3
-            id="latest-inventory-title"
-            className="text-xs font-semibold tracking-[0.08em] text-slate-500 uppercase"
-          >
-            Latest Inventory evidence
-          </h3>
-          {product.inventorySnapshot === null ? (
-            <p className="mt-2 text-xl font-semibold text-amber-900">Unknown</p>
-          ) : (
-            <>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">
-                {formatNumber(product.inventorySnapshot.availableQuantity)}{" "}
-                {product.canonicalUnit}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-slate-600">
-                Captured {formatTimestamp(product.inventorySnapshot.capturedAt)}
-              </p>
-            </>
-          )}
-          <details className="mt-3 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-600">
-            <summary className="cursor-pointer font-semibold text-emerald-900 outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
-              About Inventory evidence
-            </summary>
-            <p className="mt-2">
-              This is a point-in-time value, not a live stock ledger or
-              reservation.
-            </p>
-          </details>
-        </section>
-      </div>
+      <dl className="mt-5 grid gap-px overflow-hidden rounded-2xl border border-slate-300 bg-slate-200 shadow-sm sm:grid-cols-2">
+        <ProductAttribute label="Category" value={product.category} />
+        <ProductAttribute label="Variant" value={product.variant} />
+        <ProductAttribute label="Manufacturer" value={product.manufacturer} />
+        <ProductAttribute
+          label="Supplier Product Code"
+          value={product.supplierProductCode}
+        />
+        <ProductAttribute
+          label="Canonical unit"
+          value={product.canonicalUnit}
+          wide
+        />
+      </dl>
     </section>
   );
 }

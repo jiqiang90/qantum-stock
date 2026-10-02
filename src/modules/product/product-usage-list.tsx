@@ -1,81 +1,184 @@
 import Link from "next/link";
 
+import {
+  DataTable,
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeaderCell,
+  DataTableRow,
+} from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
-import { formatDateOnly, formatQuantity } from "@/lib/presentation/formatters";
-import type { ProductUsageEvidence } from "./product-model";
+import {
+  formatDateOnly,
+  formatNumber,
+  formatQuantity,
+  formatTimestamp,
+} from "@/lib/presentation/formatters";
+import type {
+  ProductInventoryEvidence,
+  ProductUsageEvidence,
+} from "./product-model";
 
 export function ProductUsageList({
+  inventorySnapshot,
   usages,
   unit,
 }: {
+  readonly inventorySnapshot: ProductInventoryEvidence | null;
   readonly usages: readonly ProductUsageEvidence[];
   readonly unit: string;
 }) {
-  if (usages.length === 0) {
-    return (
-      <div className="pt-8">
+  const requiredQuantity = summarizeRequiredQuantity(usages);
+
+  return (
+    <div className="space-y-5 pt-8">
+      <UsageSummary
+        inventorySnapshot={inventorySnapshot}
+        requiredQuantity={requiredQuantity}
+        unit={unit}
+      />
+
+      {usages.length === 0 ? (
         <EmptyState
           title="No Work Packages reference this Product"
           description="This Product is not referenced by any current Work Package. No usage or readiness conclusion should be inferred."
         />
-      </div>
-    );
-  }
+      ) : (
+        <DataTable label="Work Package usage">
+          <colgroup className="hidden lg:table-column-group">
+            <col className="w-[32%]" />
+            <col className="w-[34%]" />
+            <col className="w-[17%]" />
+            <col className="w-[17%]" />
+          </colgroup>
+          <DataTableHead>
+            <DataTableHeaderCell>Work Package</DataTableHeaderCell>
+            <DataTableHeaderCell>Requirement</DataTableHeaderCell>
+            <DataTableHeaderCell>Planned</DataTableHeaderCell>
+            <DataTableHeaderCell>Required</DataTableHeaderCell>
+          </DataTableHead>
+          <DataTableBody>
+            {usages.map((usage) => (
+              <DataTableRow key={usage.requirementId}>
+                <DataTableCell label="Work Package" emphasis>
+                  <Link
+                    href={`/work-packages/${usage.workPackage.id}`}
+                    className="rounded-sm text-base font-semibold text-slate-950 outline-none group-hover:text-emerald-900 after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-3 focus-visible:after:ring-emerald-700 focus-visible:after:ring-inset"
+                  >
+                    {usage.workPackage.name}
+                  </Link>
+                </DataTableCell>
+                <DataTableCell label="Requirement">
+                  {usage.description}
+                </DataTableCell>
+                <DataTableCell label="Planned">
+                  {formatDateOnly(usage.workPackage.plannedDate)}
+                </DataTableCell>
+                <DataTableCell label="Required">
+                  {formatQuantity(usage.requiredQuantity, unit)}
+                </DataTableCell>
+              </DataTableRow>
+            ))}
+          </DataTableBody>
+        </DataTable>
+      )}
+    </div>
+  );
+}
 
+function UsageSummary({
+  inventorySnapshot,
+  requiredQuantity,
+  unit,
+}: {
+  readonly inventorySnapshot: ProductInventoryEvidence | null;
+  readonly requiredQuantity: RequiredQuantitySummary;
+  readonly unit: string;
+}) {
   return (
-    <section aria-labelledby="product-usage-title" className="pt-8">
-      <p className="text-xs font-semibold tracking-[0.16em] text-slate-600 uppercase">
-        Requirement evidence
+    <section
+      aria-label="Product usage summary"
+      className="rounded-2xl border border-slate-300 bg-white px-5 py-4 shadow-sm"
+    >
+      <dl className="grid gap-4 sm:grid-cols-2 sm:gap-0 sm:divide-x sm:divide-slate-200">
+        <div className="sm:pr-6">
+          <dt className="text-xs font-semibold tracking-[0.08em] text-slate-500 uppercase">
+            Available
+          </dt>
+          <dd className="mt-1">
+            <span
+              className={`block text-xl font-semibold ${
+                inventorySnapshot === null ? "text-amber-900" : "text-slate-950"
+              }`}
+            >
+              {inventorySnapshot === null
+                ? "Unknown"
+                : `${formatNumber(inventorySnapshot.availableQuantity)} ${unit}`}
+            </span>
+            {inventorySnapshot === null ? null : (
+              <span className="mt-1 block text-xs leading-5 text-slate-600">
+                Captured {formatTimestamp(inventorySnapshot.capturedAt)}
+              </span>
+            )}
+          </dd>
+        </div>
+        <div className="border-t border-slate-200 pt-4 sm:border-t-0 sm:pt-0 sm:pl-6">
+          <dt className="text-xs font-semibold tracking-[0.08em] text-slate-500 uppercase">
+            {requiredQuantity.unknownCount === 0
+              ? "Total required"
+              : "Known required"}
+          </dt>
+          <dd className="mt-1">
+            <span className="block text-xl font-semibold text-slate-950">
+              {requiredQuantity.knownCount === 0 &&
+              requiredQuantity.unknownCount > 0
+                ? "Unknown"
+                : `${formatNumber(requiredQuantity.knownTotal)} ${unit}`}
+            </span>
+            {requiredQuantity.unknownCount === 0 ? null : (
+              <span className="mt-1 block text-xs leading-5 font-semibold text-amber-900">
+                {formatUnknownRequirementCount(requiredQuantity.unknownCount)}
+              </span>
+            )}
+          </dd>
+        </div>
+      </dl>
+      <p className="mt-4 border-t border-slate-200 pt-3 text-xs leading-5 text-slate-600">
+        Informational across listed Work Packages; does not reserve stock or
+        assume concurrent work.
       </p>
-      <h2
-        id="product-usage-title"
-        className="mt-1 text-2xl font-semibold text-slate-950"
-      >
-        Used in Work Packages
-      </h2>
-      <p className="mt-2 text-sm font-semibold text-slate-600">
-        {usages.length} Product Requirement{usages.length === 1 ? "" : "s"}
-      </p>
-
-      <ul className="mt-5 space-y-4">
-        {usages.map((usage) => (
-          <li
-            key={usage.requirementId}
-            className="grid gap-5 rounded-2xl border border-slate-300 bg-white p-5 shadow-sm sm:grid-cols-[1fr_12rem_9rem] sm:items-center sm:p-6"
-          >
-            <div>
-              <Link
-                href={`/work-packages/${usage.workPackage.id}`}
-                className="text-lg font-semibold text-emerald-900 underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
-              >
-                {usage.workPackage.name}
-              </Link>
-              <p className="mt-2 text-sm leading-6 text-slate-700">
-                {usage.description}
-              </p>
-            </div>
-            <UsageValue
-              label="Planned"
-              value={formatDateOnly(usage.workPackage.plannedDate)}
-            />
-            <UsageValue
-              label="Required"
-              value={formatQuantity(usage.requiredQuantity, unit)}
-            />
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
 
-function UsageValue({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold tracking-[0.08em] text-slate-500 uppercase">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
-    </div>
-  );
+interface RequiredQuantitySummary {
+  readonly knownCount: number;
+  readonly knownTotal: number;
+  readonly unknownCount: number;
+}
+
+function summarizeRequiredQuantity(
+  usages: readonly ProductUsageEvidence[],
+): RequiredQuantitySummary {
+  let knownCount = 0;
+  let knownTotal = 0;
+  let unknownCount = 0;
+
+  for (const usage of usages) {
+    if (usage.requiredQuantity === null) {
+      unknownCount += 1;
+    } else {
+      knownCount += 1;
+      knownTotal += usage.requiredQuantity;
+    }
+  }
+
+  return { knownCount, knownTotal, unknownCount };
+}
+
+function formatUnknownRequirementCount(count: number): string {
+  return count === 1
+    ? "1 requirement has unknown quantity"
+    : `${formatNumber(count)} requirements have unknown quantity`;
 }
