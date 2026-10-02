@@ -43,32 +43,32 @@ export type Database = {
           description: string;
           id: string;
           position: number;
-          product_id: string | null;
           required_quantity: number | null;
+          solution_product_id: string | null;
           work_package_id: string;
         };
         Insert: {
           description: string;
           id: string;
           position: number;
-          product_id?: string | null;
           required_quantity?: number | null;
+          solution_product_id?: string | null;
           work_package_id: string;
         };
         Update: {
           description?: string;
           id?: string;
           position?: number;
-          product_id?: string | null;
           required_quantity?: number | null;
+          solution_product_id?: string | null;
           work_package_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "product_requirements_product_id_fkey";
-            columns: ["product_id"];
+            foreignKeyName: "product_requirements_solution_product_id_fkey";
+            columns: ["solution_product_id"];
             isOneToOne: false;
-            referencedRelation: "products";
+            referencedRelation: "solution_products";
             referencedColumns: ["id"];
           },
           {
@@ -83,36 +83,117 @@ export type Database = {
       products: {
         Row: {
           canonical_unit: string;
+          category: string;
+          description: string;
           id: string;
+          manufacturer: string;
           name: string;
           product_code: string;
+          supplier_product_code: string;
+          variant: string;
         };
         Insert: {
           canonical_unit: string;
+          category: string;
+          description: string;
           id: string;
+          manufacturer: string;
           name: string;
           product_code: string;
+          supplier_product_code: string;
+          variant: string;
         };
         Update: {
           canonical_unit?: string;
+          category?: string;
+          description?: string;
           id?: string;
+          manufacturer?: string;
           name?: string;
           product_code?: string;
+          supplier_product_code?: string;
+          variant?: string;
         };
         Relationships: [];
+      };
+      solution_products: {
+        Row: {
+          id: string;
+          product_id: string;
+          solution_id: string;
+        };
+        Insert: {
+          id: string;
+          product_id: string;
+          solution_id: string;
+        };
+        Update: {
+          id?: string;
+          product_id?: string;
+          solution_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "solution_products_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "solution_products_solution_id_fkey";
+            columns: ["solution_id"];
+            isOneToOne: false;
+            referencedRelation: "solutions";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       solutions: {
         Row: {
           id: string;
-          name: string;
+          insulation: string;
+          integrity: string;
+          internal_code: string;
+          orientation: string;
+          service_classification: string;
+          service_size: string;
+          service_type: string;
+          service_type_option: string;
+          substrate: string;
+          substrate_option: string;
+          supplier: string;
+          supplier_ref_code: string;
         };
         Insert: {
           id: string;
-          name: string;
+          insulation: string;
+          integrity: string;
+          internal_code: string;
+          orientation: string;
+          service_classification: string;
+          service_size: string;
+          service_type: string;
+          service_type_option: string;
+          substrate: string;
+          substrate_option: string;
+          supplier: string;
+          supplier_ref_code: string;
         };
         Update: {
           id?: string;
-          name?: string;
+          insulation?: string;
+          integrity?: string;
+          internal_code?: string;
+          orientation?: string;
+          service_classification?: string;
+          service_size?: string;
+          service_type?: string;
+          service_type_option?: string;
+          substrate?: string;
+          substrate_option?: string;
+          supplier?: string;
+          supplier_ref_code?: string;
         };
         Relationships: [];
       };

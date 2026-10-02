@@ -10,6 +10,7 @@ select ok(
         'public.solutions',
         'public.work_packages',
         'public.products',
+        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -32,6 +33,7 @@ select ok(
         'public.solutions',
         'public.work_packages',
         'public.products',
+        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -49,6 +51,7 @@ select results_eq(
         'solutions',
         'work_packages',
         'products',
+        'solution_products',
         'product_requirements',
         'inventory_snapshots'
       )
@@ -60,6 +63,7 @@ select results_eq(
       ('inventory_snapshots'::name),
       ('product_requirements'::name),
       ('products'::name),
+      ('solution_products'::name),
       ('solutions'::name),
       ('work_packages'::name)
   $$,
@@ -69,7 +73,7 @@ select results_eq(
 set local role anon;
 select ok(
   exists (select 1 from public.work_packages),
-  'anon can read the Sample Work Packages through RLS'
+  'anon can read the Work Packages through RLS'
 );
 reset role;
 
