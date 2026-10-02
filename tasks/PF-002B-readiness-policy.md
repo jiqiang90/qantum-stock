@@ -2,6 +2,11 @@
 
 - Timebox: 20 minutes
 - Depends on: PF-002
+- Historical outcome: completed, then superseded by the proportionality review
+  recorded in
+  [`ADR-004`](../docs/architecture/decisions/ADR-004-simplify-readiness-module.md).
+  The evidence below remains the record of what was implemented and verified at
+  that time; it is not the current runtime design.
 
 ## Outcome
 

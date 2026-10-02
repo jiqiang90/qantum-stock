@@ -1,7 +1,7 @@
 # PF-005: Copyable Shortage Summary
 
 - Timebox: 45 minutes
-- Depends on: PF-002 and PF-004
+- Depends on: PF-002 and PF-004B
 
 ## Outcome
 
@@ -17,9 +17,10 @@ sent.
 - Add the smallest presentation component needed for selection, preview, copy
   state, and manual-copy fallback.
 
-The builder consumes the existing `ReadinessAssessment`; it has no repository,
-network, database, or clipboard dependency. The note is trimmed, blank becomes
-absent, and the maximum length is 500 characters.
+The builder consumes the `ReadinessAssessment` for the Work Package's currently
+selected Solution Option; it has no repository, network, database, or clipboard
+dependency. The note is trimmed, blank becomes absent, and the maximum length
+is 500 characters.
 
 ## Acceptance criteria
 
