@@ -21,8 +21,24 @@ const selectSolutionCommandSchema = z.object({
   expectedCurrentOptionId: workPackageIdSchema,
 });
 const selectionFeedbackSchema = z.enum(["conflict", "invalid", "unavailable"]);
+const shortageSummaryInputSchema = z.object({
+  selectedRequirementIds: z
+    .array(workPackageIdSchema)
+    .min(1)
+    .max(100)
+    .refine((ids) => new Set(ids).size === ids.length),
+  note: z.string().max(500).optional(),
+});
 
 type SearchParams = Record<string, string | string[] | undefined>;
+
+export type WorkPackageListMode = "browse" | "combined";
+
+export function parseWorkPackageListMode(
+  params: SearchParams,
+): WorkPackageListMode {
+  return params.mode === "combined" ? "combined" : "browse";
+}
 
 export function parseWorkPackageId(value: string): string | null {
   const result = workPackageIdSchema.safeParse(value);
@@ -39,6 +55,22 @@ export function parseSelectSolutionCommand(
 export function parseSelectionFeedback(value: unknown): SelectionFeedback {
   const result = selectionFeedbackSchema.safeParse(value);
   return result.success ? result.data : null;
+}
+
+export function parseShortageSummaryInput(input: unknown): {
+  readonly selectedRequirementIds: readonly string[];
+  readonly note?: string;
+} | null {
+  const result = shortageSummaryInputSchema.safeParse(input);
+  if (!result.success) {
+    return null;
+  }
+
+  const note = result.data.note?.trim();
+  return {
+    selectedRequirementIds: result.data.selectedRequirementIds,
+    ...(note === undefined || note.length === 0 ? {} : { note }),
+  };
 }
 
 export function parseWorkPackageListFilters(

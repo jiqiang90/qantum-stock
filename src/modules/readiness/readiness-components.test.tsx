@@ -6,7 +6,6 @@ import type {
   WorkPackageListFilters,
   WorkPackageReadiness,
 } from "./readiness-model";
-import { WorkPackageSelectionSummary } from "./work-package-selection-summary";
 import { WorkPackageDetail } from "./work-package-detail";
 import { WorkPackageList } from "./work-package-list";
 import { WorkPackageListControls } from "./work-package-list-controls";
@@ -38,6 +37,25 @@ describe("WorkPackageListControls", () => {
     );
     expect(form.querySelector('[name="workPackage"]')).toBeNull();
   });
+
+  it("preserves combined mode while applying or resetting filters", () => {
+    render(
+      <WorkPackageListControls
+        filters={{ query: "riser", status: "SHORTAGE" }}
+        mode="combined"
+      />,
+    );
+
+    const form = screen.getByRole("form", { name: "Filter Work Packages" });
+    expect(within(form).getByDisplayValue("combined")).toHaveAttribute(
+      "name",
+      "mode",
+    );
+    expect(within(form).getByRole("link", { name: "Reset" })).toHaveAttribute(
+      "href",
+      "/?mode=combined",
+    );
+  });
 });
 
 describe("WorkPackageList", () => {
@@ -60,7 +78,7 @@ describe("WorkPackageList", () => {
       within(table)
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
-    ).toEqual(["Compare", "Planned", "Work Package", "Solution", "Status"]);
+    ).toEqual(["Planned", "Work Package", "Solution", "Status"]);
 
     const rows = within(table).getAllByRole("row").slice(1);
     expect(rows).toHaveLength(3);
@@ -70,12 +88,10 @@ describe("WorkPackageList", () => {
     expect(screen.getByText("READY")).toBeInTheDocument();
     expect(screen.getByText("SHORTAGE")).toBeInTheDocument();
     expect(screen.getByText("UNKNOWN")).toBeInTheDocument();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("checkbox", { name: "Select Work Package ready" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Check selected packages" }),
-    ).toBeInTheDocument();
+      screen.getByRole("link", { name: "Check combined availability" }),
+    ).toHaveAttribute("href", "/?mode=combined");
     expect(
       screen.getByRole("link", { name: /Work Package shortage/i }),
     ).toHaveAttribute("href", "/work-packages/shortage");
@@ -103,7 +119,7 @@ describe("WorkPackageList", () => {
     expect(screen.queryByText("1 Work Packages")).not.toBeInTheDocument();
   });
 
-  it("preserves selected Work Packages and explains the two-package minimum", () => {
+  it("keeps the default list browse-only even when selection props are omitted", () => {
     render(
       <WorkPackageList
         filters={{ query: "package", status: "all" }}
@@ -111,21 +127,12 @@ describe("WorkPackageList", () => {
           workPackageReadiness("ready", "READY"),
           workPackageReadiness("shortage", "SHORTAGE"),
         ]}
-        selectedIds={["shortage"]}
-        selectionAttempted
         totalCount={2}
       />,
     );
 
-    expect(
-      screen.getByRole("checkbox", { name: "Select Work Package shortage" }),
-    ).toBeChecked();
-    expect(screen.getByRole("alert")).toHaveTextContent(
-      "Select at least two Work Packages",
-    );
-    expect(
-      screen.getByRole("link", { name: "Clear selection" }),
-    ).toHaveAttribute("href", "/?q=package");
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   it("shows an explicit empty state without implying readiness", () => {
@@ -164,51 +171,6 @@ describe("WorkPackageList", () => {
       "href",
       "/",
     );
-  });
-});
-
-describe("WorkPackageSelectionSummary", () => {
-  it("shows aggregate Product demand without assigning the shortage", () => {
-    render(
-      <WorkPackageSelectionSummary
-        assessment={{
-          status: "SHORTAGE",
-          workPackageIds: ["work-package-a", "work-package-b"],
-          products: [
-            {
-              product: {
-                id: "product-fire-collar",
-                productCode: "SC-100",
-                name: "SC-100 Fire Collar",
-                canonicalUnit: "each",
-              },
-              knownRequiredQuantity: 12,
-              requiredQuantityIncomplete: false,
-              availableQuantity: 10,
-              missingQuantity: 2,
-              inventoryCapturedAt: "2026-10-02T00:00:00.000Z",
-              status: "SHORTAGE",
-              reason: "INSUFFICIENT_QUANTITY",
-            },
-          ],
-          unmappedRequirementCount: 0,
-          workPackagesWithoutRequirements: 0,
-        }}
-      />,
-    );
-
-    expect(
-      screen.getByRole("heading", { name: "Selected package readiness" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("2 Work Packages selected")).toBeInTheDocument();
-    expect(screen.getByText("12 each")).toBeInTheDocument();
-    expect(screen.getByText("10 each")).toBeInTheDocument();
-    expect(screen.getByText("2 each")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /does not reserve stock or decide which package receives it/i,
-      ),
-    ).toBeInTheDocument();
   });
 });
 
@@ -375,7 +337,7 @@ describe("WorkPackageDetail", () => {
       }),
     ).toHaveAttribute("href", "/products/product-known");
 
-    const knownEvidence = screen
+    const knownEvidence = within(requirementsTable)
       .getByText("Wrap four pipe penetrations")
       .closest("tr");
     expect(knownEvidence).not.toBeNull();
@@ -387,7 +349,7 @@ describe("WorkPackageDetail", () => {
       within(knownEvidence!).getByText("Missing").parentElement,
     ).toHaveTextContent("4 roll");
 
-    const unknownEvidence = screen
+    const unknownEvidence = within(requirementsTable)
       .getByText("Provide unresolved accessory")
       .closest("tr");
     expect(unknownEvidence).not.toBeNull();

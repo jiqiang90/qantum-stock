@@ -7,8 +7,10 @@ import type { WorkPackageListFilters } from "./readiness-model";
 
 export function WorkPackageListControls({
   filters,
+  mode = "browse",
 }: {
   readonly filters: WorkPackageListFilters;
+  readonly mode?: "browse" | "combined";
 }) {
   return (
     <form
@@ -17,6 +19,9 @@ export function WorkPackageListControls({
       aria-label="Filter Work Packages"
       className="mb-8 grid gap-4 rounded-2xl border border-slate-300 bg-white p-5 shadow-sm sm:grid-cols-2 lg:grid-cols-[minmax(15rem,1fr)_12rem_auto] lg:items-end"
     >
+      {mode === "combined" ? (
+        <input name="mode" type="hidden" value="combined" />
+      ) : null}
       <ListSearchField
         defaultValue={filters.query}
         label="Search Work Packages"
@@ -31,7 +36,9 @@ export function WorkPackageListControls({
         <option value="UNKNOWN">Unknown</option>
       </ListFilterSelect>
 
-      <ListFilterActions resetHref="/" />
+      <ListFilterActions
+        resetHref={mode === "combined" ? "/?mode=combined" : "/"}
+      />
     </form>
   );
 }

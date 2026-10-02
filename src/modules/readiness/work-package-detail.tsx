@@ -9,6 +9,7 @@ import type {
   WorkPackageReadiness,
 } from "./readiness-model";
 import { WorkPackageRequirementsSection } from "./work-package-requirements-section";
+import { WorkPackageShortageSummary } from "./work-package-shortage-summary";
 import {
   type SelectSolutionAction,
   WorkPackageSolutionSection,
@@ -69,6 +70,16 @@ export function WorkPackageDetail({
         />
 
         <WorkPackageRequirementsSection assessment={previewOption.assessment} />
+
+        <WorkPackageShortageSummary
+          key={previewOption.option.id}
+          item={{
+            workPackage,
+            selectedOption: previewOption.option,
+            assessment: previewOption.assessment,
+            solutionOptions,
+          }}
+        />
       </div>
     </article>
   );

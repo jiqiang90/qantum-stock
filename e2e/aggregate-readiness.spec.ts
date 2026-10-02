@@ -7,9 +7,15 @@ test.use({
 });
 
 test("two individually ready Work Packages expose shared inventory contention", async ({
+  context,
   page,
 }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: "http://127.0.0.1:3000",
+  });
   await page.goto("/");
+
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
 
   const firstRiserRow = page
     .getByRole("row")
@@ -23,6 +29,9 @@ test("two individually ready Work Packages expose shared inventory contention", 
     }),
   ).toBeVisible();
 
+  await page.getByRole("link", { name: "Check combined availability" }).click();
+  await expect(page).toHaveURL(/\?mode=combined/);
+
   await page
     .getByRole("checkbox", {
       name: "Select Level 2 service riser firestopping",
@@ -33,10 +42,10 @@ test("two individually ready Work Packages expose shared inventory contention", 
       name: "Select Level 3 east riser firestopping",
     })
     .check();
-  await page.getByRole("button", { name: "Check selected packages" }).click();
+  await page.getByRole("button", { name: "Check availability" }).click();
 
-  const summary = page.getByRole("region", {
-    name: "Selected package readiness",
+  const summary = page.getByRole("dialog", {
+    name: "Combined Availability Report",
   });
   await expect(summary).toBeVisible();
   await expect(summary.getByText("2 Work Packages selected")).toBeVisible();
@@ -51,4 +60,36 @@ test("two individually ready Work Packages expose shared inventory contention", 
   await expect(summary).toContainText(
     "It does not reserve stock or decide which package receives it.",
   );
+  await summary.getByRole("button", { name: "Copy summary" }).click();
+  await expect(summary.getByRole("status")).toHaveText("Copied");
+  await expect(
+    summary.getByRole("textbox", { name: "Summary preview" }),
+  ).toHaveValue(/COMBINED MATERIAL SHORTAGE SUMMARY/);
+
+  await page.keyboard.press("Escape");
+  await expect(summary).toBeHidden();
+  await expect(page).toHaveURL(/mode=combined/);
+  await expect(page).not.toHaveURL(/compare=1/);
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Select Level 2 service riser firestopping",
+    }),
+  ).toBeChecked();
+  await expect(
+    page.getByRole("checkbox", {
+      name: "Select Level 3 east riser firestopping",
+    }),
+  ).toBeChecked();
+
+  await page.getByRole("button", { name: "Check availability" }).click();
+  await expect(summary).toBeVisible();
+  await summary.getByRole("button", { name: "Close report" }).click();
+  await expect(summary).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: "Check availability" }),
+  ).toBeFocused();
+
+  await page.getByRole("link", { name: "Exit combined availability" }).click();
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
 });

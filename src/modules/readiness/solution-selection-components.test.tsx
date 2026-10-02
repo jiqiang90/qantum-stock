@@ -22,7 +22,11 @@ describe("WorkPackage Solution selection", () => {
     );
 
     expect(screen.getByRole("status")).toHaveTextContent("SHORTAGE");
-    expect(screen.getByText("Alternative sealant")).toBeVisible();
+    expect(
+      within(
+        screen.getByRole("region", { name: "Product Requirements" }),
+      ).getByText("Alternative sealant"),
+    ).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Sign in to update Solution" }),
     ).toHaveAttribute(

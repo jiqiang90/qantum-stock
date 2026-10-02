@@ -2,12 +2,59 @@ import { describe, expect, it } from "vitest";
 
 import {
   parseSupabaseReadConfig,
+  parseWorkPackageListMode,
   parseWorkPackageListFilters,
   parseWorkPackageSelection,
   parseWorkPackageId,
   parseSelectSolutionCommand,
   parseSelectionFeedback,
+  parseShortageSummaryInput,
 } from "./readiness-boundaries";
+
+describe("parseShortageSummaryInput", () => {
+  it("trims a valid note and preserves selected requirement IDs", () => {
+    expect(
+      parseShortageSummaryInput({
+        selectedRequirementIds: [
+          "90000000-0000-0000-0000-000000000001",
+          "90000000-0000-0000-0000-000000000002",
+        ],
+        note: "  Please confirm delivery.  ",
+      }),
+    ).toEqual({
+      selectedRequirementIds: [
+        "90000000-0000-0000-0000-000000000001",
+        "90000000-0000-0000-0000-000000000002",
+      ],
+      note: "Please confirm delivery.",
+    });
+  });
+
+  it("rejects duplicate IDs and notes longer than 500 characters", () => {
+    const id = "90000000-0000-0000-0000-000000000001";
+    expect(
+      parseShortageSummaryInput({
+        selectedRequirementIds: [id, id],
+        note: "",
+      }),
+    ).toBeNull();
+    expect(
+      parseShortageSummaryInput({
+        selectedRequirementIds: [id],
+        note: "x".repeat(501),
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("parseWorkPackageListMode", () => {
+  it("enables only the explicit combined availability mode", () => {
+    expect(parseWorkPackageListMode({ mode: "combined" })).toBe("combined");
+    expect(parseWorkPackageListMode({})).toBe("browse");
+    expect(parseWorkPackageListMode({ mode: "compare" })).toBe("browse");
+    expect(parseWorkPackageListMode({ mode: ["combined"] })).toBe("browse");
+  });
+});
 
 describe("parseWorkPackageListFilters", () => {
   it("normalizes valid search and readiness filters", () => {
