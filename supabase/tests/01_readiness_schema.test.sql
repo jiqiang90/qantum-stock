@@ -312,14 +312,14 @@ select throws_ok(
   $$
     insert into public.product_requirements (
       id,
-      work_package_id,
+      solution_option_id,
       position,
       description,
       solution_product_id,
       required_quantity
     ) values (
       '40000000-0000-0000-0000-000000000097',
-      '20000000-0000-0000-0000-000000000001',
+      '70000000-0000-0000-0000-000000000001',
       97,
       'Reject a Product mapping from another Solution',
       '60000000-0000-0000-0000-000000000004',
@@ -327,18 +327,18 @@ select throws_ok(
     )
   $$,
   '23514',
-  'Product Requirement mapping must belong to the Work Package Solution',
-  'a Product Requirement cannot use a mapping from another Solution'
+  'Product Requirement mapping must belong to the Solution Option',
+  'a Product Requirement cannot use a mapping from another option Solution'
 );
 select throws_ok(
   $$
-    update public.work_packages
+    update public.solution_options
     set solution_id = '10000000-0000-0000-0000-000000000002'
-    where id = '20000000-0000-0000-0000-000000000001'
+    where id = '70000000-0000-0000-0000-000000000001'
   $$,
   '23514',
-  'Work Package Solution must match all mapped Product Requirements',
-  'a Work Package cannot change to a Solution that conflicts with its Requirements'
+  'Solution Option must match all mapped Product Requirements',
+  'a Solution Option cannot change to a Solution that conflicts with its Requirements'
 );
 select throws_ok(
   $$
@@ -347,22 +347,22 @@ select throws_ok(
     where id = '60000000-0000-0000-0000-000000000001'
   $$,
   '23514',
-  'Solution Product mapping must match all linked Work Packages',
-  'a Solution Product cannot move while linked Requirements use another Solution'
+  'Solution Product mapping must match all linked Solution Options',
+  'a Solution Product cannot move while option Requirements use another Solution'
 );
 
 select lives_ok(
   $$
     insert into public.product_requirements (
       id,
-      work_package_id,
+      solution_option_id,
       position,
       description,
       solution_product_id,
       required_quantity
     ) values (
       '40000000-0000-0000-0000-000000000099',
-      '20000000-0000-0000-0000-000000000001',
+      '70000000-0000-0000-0000-000000000001',
       99,
       'Verify zero required quantity remains known',
       '60000000-0000-0000-0000-000000000001',
@@ -375,14 +375,14 @@ select throws_ok(
   $$
     insert into public.product_requirements (
       id,
-      work_package_id,
+      solution_option_id,
       position,
       description,
       solution_product_id,
       required_quantity
     ) values (
       '40000000-0000-0000-0000-000000000098',
-      '20000000-0000-0000-0000-000000000001',
+      '70000000-0000-0000-0000-000000000001',
       98,
       'Quantity without a Product-owned unit is invalid',
       null,

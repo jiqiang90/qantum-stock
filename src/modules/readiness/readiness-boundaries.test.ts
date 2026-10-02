@@ -5,6 +5,8 @@ import {
   parseWorkPackageListFilters,
   parseWorkPackageSelection,
   parseWorkPackageId,
+  parseSelectSolutionCommand,
+  parseSelectionFeedback,
 } from "./readiness-boundaries";
 
 describe("parseWorkPackageListFilters", () => {
@@ -21,6 +23,40 @@ describe("parseWorkPackageListFilters", () => {
         status: "BLOCKED",
       }),
     ).toEqual({ query: "", status: "all" });
+  });
+});
+
+describe("parseSelectSolutionCommand", () => {
+  it("accepts the three UUIDs needed for an optimistic selection write", () => {
+    expect(
+      parseSelectSolutionCommand({
+        workPackageId: "20000000-0000-0000-0000-000000000001",
+        solutionOptionId: "70000000-0000-0000-0000-000000000002",
+        expectedCurrentOptionId: "70000000-0000-0000-0000-000000000001",
+      }),
+    ).toEqual({
+      workPackageId: "20000000-0000-0000-0000-000000000001",
+      solutionOptionId: "70000000-0000-0000-0000-000000000002",
+      expectedCurrentOptionId: "70000000-0000-0000-0000-000000000001",
+    });
+  });
+
+  it("rejects partial or malformed write commands", () => {
+    expect(
+      parseSelectSolutionCommand({
+        workPackageId: "not-a-uuid",
+        solutionOptionId: "70000000-0000-0000-0000-000000000002",
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("parseSelectionFeedback", () => {
+  it("keeps known feedback and ignores malformed values", () => {
+    expect(parseSelectionFeedback("conflict")).toBe("conflict");
+    expect(parseSelectionFeedback("changed")).toBeNull();
+    expect(parseSelectionFeedback(["conflict"])).toBeNull();
+    expect(parseSelectionFeedback("database-error")).toBeNull();
   });
 });
 

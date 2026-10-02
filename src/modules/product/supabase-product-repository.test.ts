@@ -102,10 +102,14 @@ describe("mapProductRow", () => {
               position: 2,
               description: "Later position",
               required_quantity: null,
-              work_package: {
-                id: "work-package-a",
-                name: "Alpha works",
-                planned_date: "2026-10-08",
+              solution_option: {
+                id: "option-a",
+                work_package: {
+                  id: "work-package-a",
+                  name: "Alpha works",
+                  planned_date: "2026-10-08",
+                  selected_solution_option_id: "option-a",
+                },
               },
             },
             {
@@ -113,10 +117,14 @@ describe("mapProductRow", () => {
               position: 1,
               description: "Same position, later ID",
               required_quantity: 3,
-              work_package: {
-                id: "work-package-a",
-                name: "Alpha works",
-                planned_date: "2026-10-08",
+              solution_option: {
+                id: "option-a",
+                work_package: {
+                  id: "work-package-a",
+                  name: "Alpha works",
+                  planned_date: "2026-10-08",
+                  selected_solution_option_id: "option-a",
+                },
               },
             },
           ],
@@ -128,10 +136,14 @@ describe("mapProductRow", () => {
               position: 1,
               description: "Same position, earlier ID",
               required_quantity: 2,
-              work_package: {
-                id: "work-package-a",
-                name: "Alpha works",
-                planned_date: "2026-10-08",
+              solution_option: {
+                id: "option-a",
+                work_package: {
+                  id: "work-package-a",
+                  name: "Alpha works",
+                  planned_date: "2026-10-08",
+                  selected_solution_option_id: "option-a",
+                },
               },
             },
             {
@@ -139,10 +151,29 @@ describe("mapProductRow", () => {
               position: 9,
               description: "Earlier planned Work Package",
               required_quantity: 1,
-              work_package: {
-                id: "work-package-b",
-                name: "Beta works",
-                planned_date: "2026-10-07",
+              solution_option: {
+                id: "option-b",
+                work_package: {
+                  id: "work-package-b",
+                  name: "Beta works",
+                  planned_date: "2026-10-07",
+                  selected_solution_option_id: "option-b",
+                },
+              },
+            },
+            {
+              id: "requirement-unselected-option",
+              position: 0,
+              description: "Alternative plan only",
+              required_quantity: 99,
+              solution_option: {
+                id: "option-a-alternative",
+                work_package: {
+                  id: "work-package-a",
+                  name: "Alpha works",
+                  planned_date: "2026-10-08",
+                  selected_solution_option_id: "option-a",
+                },
               },
             },
           ],

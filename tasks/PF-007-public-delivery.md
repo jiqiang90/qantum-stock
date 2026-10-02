@@ -16,6 +16,9 @@ capabilities and Production Gaps.
   only for `main` after all required verification jobs pass.
 - Configure only public Supabase runtime values in Vercel; Vercel deployment
   credentials remain protected GitHub secrets.
+- Pre-provision the hosted Demo Team Leader in Supabase Auth and share its
+  credentials privately with the reviewer. Do not store credentials in Git,
+  Vercel client configuration, seed SQL, screenshots, or public documentation.
 
 The deployment job uses the same checked-out commit that passed the workflow,
 builds and deploys it with the Vercel CLI, records URL/revision, and performs a
@@ -27,20 +30,29 @@ secrets are documented one-time human setup. Migrations and seed remain
 versioned, repeatable commands; verification, build, deployment, and smoke checks
 remain pipeline behavior.
 
+This demonstration is deployed to a fresh synthetic Supabase project. The
+current migration is not a rolling, backward-compatible production upgrade and
+does not claim to preserve a separately populated hosted database.
+
 ## Acceptance criteria
 
 - [ ] A clean clone can start local Supabase, run the app, and execute the
       documented checks.
-- [ ] Hosted Supabase has the reviewed migration, synthetic seed, and read-only
-      public access; public mutations are denied.
+- [ ] Hosted Supabase has the reviewed migration, synthetic seed, anonymous read
+      access, authenticated constrained-command access, and denied direct table
+      mutation for both runtime roles.
+- [ ] Hosted Supabase self-service signup is disabled, and a public signup
+      attempt is verified to fail before the demo credentials are shared.
 - [ ] The `main` deployment job depends on required verification jobs and deploys
       the same workflow revision.
 - [ ] No privileged Supabase credential is exposed to source or runtime.
-- [ ] The public URL completes the same A2 journey as local Playwright.
+- [ ] The public URL supports anonymous review and completes the same
+      authenticated A2 mutation journey when private demo credentials are used.
 - [ ] Repository, CI, deployment, and observed runtime are reported as separate
       evidence.
-- [ ] README makes absent identity, recipient, persistence, and delivery proof
-      explicit.
+- [ ] README distinguishes bounded demo authentication from absent production
+      identity/authorization, recipient, shortage persistence, and delivery
+      proof.
 - [ ] Public responses use proportionate security headers.
 - [ ] The supplied catalogue excerpt remains outside Git history and runtime.
 
@@ -50,7 +62,9 @@ remain pipeline behavior.
 - [ ] After authorization, use the existing GitHub repository, create/link the
       hosted Supabase and Vercel resources, and configure secrets without
       writing them to source.
-- [ ] Apply hosted migration/seed and verify read-only public access.
+- [ ] Apply hosted migration/seed, provision the Demo Team Leader outside Git,
+      disable and test every hosted self-service signup path, and verify
+      anonymous read plus authenticated constrained write.
 - [ ] Extend the existing workflow with the CI-gated deployment job and verify
       its exact revision.
 - [ ] Verify the public journey in a fresh browser session.

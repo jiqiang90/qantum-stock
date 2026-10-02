@@ -69,6 +69,13 @@ The design was corrected to **A2: Readiness + Copy Shortage Summary**:
 This is not a hidden downgrade. It is an explicit scope decision that preserves
 the strongest evaluable technical concerns while removing unsupported workflow.
 
+PF-004B later introduced a different persistence need: one reversible Selected
+Solution on a Work Package. That write has a concrete owner, invariant, and user
+effect, so the accepted boundary now keeps the demonstration publicly readable
+but requires one pre-provisioned Demo Team Leader account to persist it. This
+does not revive anonymous Auth, durable shortage reports, user registration,
+tenancy, or production RBAC.
+
 ## Proportionate design examples
 
 - The Supabase query has a repository port because it is an external dependency

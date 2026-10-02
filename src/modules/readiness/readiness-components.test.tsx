@@ -265,47 +265,52 @@ describe("WorkPackageDetail", () => {
   });
 
   it("shows specific Product evidence, numeric zero, and unknown evidence", () => {
+    const baseItem = workPackageReadiness("detail", "SHORTAGE");
+    const detailAssessment: WorkPackageReadiness["assessment"] = {
+      status: "SHORTAGE",
+      reason: null,
+      requirements: [
+        {
+          requirementId: "requirement-known",
+          description: "Wrap four pipe penetrations",
+          product: {
+            id: "product-known",
+            productCode: "PW-050",
+            name: "PW-050 Firestop Pipe Wrap",
+            canonicalUnit: "roll",
+          },
+          requiredQuantity: 4,
+          availableQuantity: 0,
+          missingQuantity: 4,
+          inventoryCapturedAt: "2026-10-02T00:00:00Z",
+          status: "SHORTAGE",
+          reason: "INSUFFICIENT_QUANTITY",
+        },
+        {
+          requirementId: "requirement-unknown",
+          description: "Provide unresolved accessory",
+          product: null,
+          requiredQuantity: null,
+          availableQuantity: null,
+          missingQuantity: null,
+          inventoryCapturedAt: null,
+          status: "UNKNOWN",
+          reason: "PRODUCT_NOT_MAPPED",
+        },
+      ],
+    };
     const item: WorkPackageReadiness = {
+      ...baseItem,
       workPackage: {
-        id: "work-package-detail",
+        ...baseItem.workPackage,
         name: "Timber floor readiness check",
         plannedDate: "2026-10-09",
-        solution: solutionReference("solution-detail"),
-        requirements: [],
       },
-      assessment: {
-        status: "SHORTAGE",
-        reason: null,
-        requirements: [
-          {
-            requirementId: "requirement-known",
-            description: "Wrap four pipe penetrations",
-            product: {
-              id: "product-known",
-              productCode: "PW-050",
-              name: "PW-050 Firestop Pipe Wrap",
-              canonicalUnit: "roll",
-            },
-            requiredQuantity: 4,
-            availableQuantity: 0,
-            missingQuantity: 4,
-            inventoryCapturedAt: "2026-10-02T00:00:00Z",
-            status: "SHORTAGE",
-            reason: "INSUFFICIENT_QUANTITY",
-          },
-          {
-            requirementId: "requirement-unknown",
-            description: "Provide unresolved accessory",
-            product: null,
-            requiredQuantity: null,
-            availableQuantity: null,
-            missingQuantity: null,
-            inventoryCapturedAt: null,
-            status: "UNKNOWN",
-            reason: "PRODUCT_NOT_MAPPED",
-          },
-        ],
-      },
+      assessment: detailAssessment,
+      solutionOptions: baseItem.solutionOptions.map((option) => ({
+        ...option,
+        assessment: detailAssessment,
+      })),
     };
 
     render(<WorkPackageDetail item={item} />);
@@ -397,29 +402,34 @@ describe("WorkPackageDetail", () => {
 
   it("omits the redundant Product Requirement count for one item", () => {
     const baseItem = workPackageReadiness("single", "READY");
+    const assessment: WorkPackageReadiness["assessment"] = {
+      ...baseItem.assessment,
+      requirements: [
+        {
+          requirementId: "requirement-single",
+          description: "Install one collar",
+          product: {
+            id: "product-single",
+            productCode: "SC-100",
+            name: "SC-100 Fire Collar",
+            canonicalUnit: "each",
+          },
+          requiredQuantity: 1,
+          availableQuantity: 10,
+          missingQuantity: 0,
+          inventoryCapturedAt: "2026-10-02T00:00:00Z",
+          status: "READY",
+          reason: "SUFFICIENT_QUANTITY",
+        },
+      ],
+    };
     const item: WorkPackageReadiness = {
       ...baseItem,
-      assessment: {
-        ...baseItem.assessment,
-        requirements: [
-          {
-            requirementId: "requirement-single",
-            description: "Install one collar",
-            product: {
-              id: "product-single",
-              productCode: "SC-100",
-              name: "SC-100 Fire Collar",
-              canonicalUnit: "each",
-            },
-            requiredQuantity: 1,
-            availableQuantity: 10,
-            missingQuantity: 0,
-            inventoryCapturedAt: "2026-10-02T00:00:00Z",
-            status: "READY",
-            reason: "SUFFICIENT_QUANTITY",
-          },
-        ],
-      },
+      assessment,
+      solutionOptions: baseItem.solutionOptions.map((option) => ({
+        ...option,
+        assessment,
+      })),
     };
 
     render(<WorkPackageDetail item={item} />);
@@ -432,19 +442,28 @@ function workPackageReadiness(
   id: string,
   status: WorkPackageReadiness["assessment"]["status"],
 ): WorkPackageReadiness {
+  const option = {
+    id: `option-${id}`,
+    solution: solutionReference(`solution-${id}`),
+    requirements: [],
+  };
+  const assessment = {
+    status,
+    reason: status === "UNKNOWN" ? ("NO_REQUIREMENTS" as const) : null,
+    requirements: [],
+  };
+
   return {
     workPackage: {
       id,
       name: `Work Package ${id}`,
       plannedDate: "2026-10-08",
-      solution: solutionReference(`solution-${id}`),
-      requirements: [],
+      selectedSolutionOptionId: option.id,
+      solutionOptions: [option],
     },
-    assessment: {
-      status,
-      reason: status === "UNKNOWN" ? "NO_REQUIREMENTS" : null,
-      requirements: [],
-    },
+    selectedOption: option,
+    assessment,
+    solutionOptions: [{ option, assessment, selected: true }],
   };
 }
 

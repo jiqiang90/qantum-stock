@@ -1,6 +1,6 @@
 begin;
 
-select plan(4);
+select plan(7);
 
 select ok(
   (
@@ -10,6 +10,7 @@ select ok(
         'public.solutions',
         'public.work_packages',
         'public.products',
+        'public.solution_options',
         'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
@@ -17,6 +18,24 @@ select ok(
     ) as exposed_tables(table_name)
   ),
   'anon can select all tables required by the demo'
+);
+
+select ok(
+  (
+    select bool_and(has_table_privilege('authenticated', table_name, 'SELECT'))
+    from unnest(
+      array[
+        'public.solutions',
+        'public.work_packages',
+        'public.products',
+        'public.solution_options',
+        'public.solution_products',
+        'public.product_requirements',
+        'public.inventory_snapshots'
+      ]
+    ) as exposed_tables(table_name)
+  ),
+  'authenticated can select all tables required by the demo'
 );
 
 select ok(
@@ -33,6 +52,7 @@ select ok(
         'public.solutions',
         'public.work_packages',
         'public.products',
+        'public.solution_options',
         'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
@@ -44,6 +64,31 @@ select ok(
 
 select results_eq(
   $$
+    select not bool_or(
+      has_table_privilege(
+        'authenticated',
+        table_name,
+        'INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'
+      )
+    )
+    from unnest(
+      array[
+        'public.solutions',
+        'public.work_packages',
+        'public.products',
+        'public.solution_options',
+        'public.solution_products',
+        'public.product_requirements',
+        'public.inventory_snapshots'
+      ]
+    ) as exposed_tables(table_name)
+  $$,
+  $$ values (true) $$,
+  'authenticated has no direct mutation privileges on demo tables'
+);
+
+select results_eq(
+  $$
     select relname
     from pg_class
     where relnamespace = 'public'::regnamespace
@@ -51,6 +96,7 @@ select results_eq(
         'solutions',
         'work_packages',
         'products',
+        'solution_options',
         'solution_products',
         'product_requirements',
         'inventory_snapshots'
@@ -63,6 +109,7 @@ select results_eq(
       ('inventory_snapshots'::name),
       ('product_requirements'::name),
       ('products'::name),
+      ('solution_options'::name),
       ('solution_products'::name),
       ('solutions'::name),
       ('work_packages'::name)
@@ -74,6 +121,13 @@ set local role anon;
 select ok(
   exists (select 1 from public.work_packages),
   'anon can read the Work Packages through RLS'
+);
+reset role;
+
+set local role authenticated;
+select ok(
+  exists (select 1 from public.work_packages),
+  'authenticated can read the Work Packages through RLS'
 );
 reset role;
 

@@ -57,30 +57,39 @@ function workPackage(
     readonly serviceType: string;
   },
 ): WorkPackageReadiness {
+  const option = {
+    id: `option-${id}`,
+    solution: {
+      id: `solution-${id}`,
+      supplier: "Ryanfire",
+      orientation: "Wall",
+      substrate: "FR plasterboard wall",
+      serviceClassification: "Pipe",
+      serviceSize: "Ø40mm",
+      integrity: "60",
+      insulation: "60",
+      serviceTypeOption: solution.serviceType,
+      substrateOption: "Plasterboard Wall",
+      ...solution,
+    },
+    requirements: [],
+  };
+  const assessment = {
+    status,
+    reason: status === "UNKNOWN" ? ("NO_REQUIREMENTS" as const) : null,
+    requirements: [],
+  };
+
   return {
     workPackage: {
       id,
       name,
       plannedDate: "2026-10-08",
-      requirements: [],
-      solution: {
-        id: `solution-${id}`,
-        supplier: "Ryanfire",
-        orientation: "Wall",
-        substrate: "FR plasterboard wall",
-        serviceClassification: "Pipe",
-        serviceSize: "Ø40mm",
-        integrity: "60",
-        insulation: "60",
-        serviceTypeOption: solution.serviceType,
-        substrateOption: "Plasterboard Wall",
-        ...solution,
-      },
+      selectedSolutionOptionId: option.id,
+      solutionOptions: [option],
     },
-    assessment: {
-      status,
-      reason: status === "UNKNOWN" ? "NO_REQUIREMENTS" : null,
-      requirements: [],
-    },
+    selectedOption: option,
+    assessment,
+    solutionOptions: [{ option, assessment, selected: true }],
   };
 }

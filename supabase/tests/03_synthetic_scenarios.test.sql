@@ -56,13 +56,13 @@ select is(
 );
 select is(
   (select count(*) from public.solution_products),
-  9::bigint,
-  'seed contains nine Solution-to-Product mappings'
+  21::bigint,
+  'seed contains twenty-one Solution-to-Product mappings'
 );
 select is(
   (select count(*) from public.product_requirements),
-  15::bigint,
-  'seed contains fifteen Product Requirements'
+  29::bigint,
+  'seed contains twenty-nine option-owned Product Requirements'
 );
 select is(
   (select count(*) from public.inventory_snapshots),
@@ -73,10 +73,10 @@ select is(
   (
     select count(*)
     from public.work_packages
-    where solution_id is not null
+    where selected_solution_option_id is not null
   ),
   6::bigint,
-  'every Work Package nominates one Solution'
+  'every Work Package nominates one Solution Option'
 );
 select is(
   (
@@ -103,21 +103,21 @@ select is(
     select count(distinct solution_id)
     from public.solution_products
   ),
-  4::bigint,
-  'four source-backed Solutions have synthetic Product mappings'
+  9::bigint,
+  'nine source-backed Solutions have synthetic Product mappings'
 );
 select is(
   (
     select count(*)
     from (
       select solution_id
-      from public.work_packages
+      from public.solution_options
       group by solution_id
       having count(*) > 1
     ) as reused_solution
   ),
-  2::bigint,
-  'two Solutions are reused by multiple Work Packages'
+  3::bigint,
+  'three Solutions are eligible for multiple Work Packages'
 );
 select is(
   (
@@ -163,21 +163,21 @@ select is(
       where mapping.solution_id = solution.id
     )
   ),
-  8::bigint,
-  'eight source-backed Solutions remain catalogue coverage only'
+  3::bigint,
+  'three source-backed Solutions remain catalogue coverage only'
 );
 select is(
   (
     select count(*)
     from public.product_requirements as requirement
-    join public.work_packages as work_package
-      on work_package.id = requirement.work_package_id
+    join public.solution_options as solution_option
+      on solution_option.id = requirement.solution_option_id
     join public.solution_products as mapping
       on mapping.id = requirement.solution_product_id
-    where mapping.solution_id <> work_package.solution_id
+    where mapping.solution_id <> solution_option.solution_id
   ),
   0::bigint,
-  'every mapped Product Requirement belongs to its nominated Solution'
+  'every mapped Product Requirement belongs to its Solution Option'
 );
 select is(
   (
@@ -196,8 +196,8 @@ select is(
     where solution_product_id is not null
       and required_quantity is null
   ),
-  1::bigint,
-  'seed preserves one missing required quantity'
+  2::bigint,
+  'seed preserves two missing required quantities across the option set'
 );
 select is(
   (
@@ -206,11 +206,11 @@ select is(
     where not exists (
       select 1
       from public.product_requirements as requirement
-      where requirement.work_package_id = work_package.id
+      where requirement.solution_option_id = work_package.selected_solution_option_id
     )
   ),
   0::bigint,
-  'every demo Work Package has at least one Product Requirement'
+      'every selected Solution Option has at least one Product Requirement'
 );
 select is(
   (
@@ -252,7 +252,7 @@ select results_eq(
     requirement_statuses as (
       select
         requirement.id as requirement_id,
-        requirement.work_package_id,
+        solution_option.work_package_id,
         case
           when mapping.product_id is null
             or requirement.required_quantity is null
@@ -263,6 +263,11 @@ select results_eq(
           else 'READY'
         end as status
       from public.product_requirements as requirement
+      join public.solution_options as solution_option
+        on solution_option.id = requirement.solution_option_id
+      join public.work_packages as selected_work_package
+        on selected_work_package.id = solution_option.work_package_id
+        and selected_work_package.selected_solution_option_id = solution_option.id
       left join public.solution_products as mapping
         on mapping.id = requirement.solution_product_id
       left join latest_inventory as inventory
@@ -301,9 +306,14 @@ select is(
         mapping.product_id,
         sum(requirement.required_quantity) as required_quantity
       from public.product_requirements as requirement
+      join public.solution_options as solution_option
+        on solution_option.id = requirement.solution_option_id
+      join public.work_packages as work_package
+        on work_package.id = solution_option.work_package_id
+        and work_package.selected_solution_option_id = solution_option.id
       join public.solution_products as mapping
         on mapping.id = requirement.solution_product_id
-      where requirement.work_package_id in (
+      where solution_option.work_package_id in (
         '20000000-0000-0000-0000-000000000001',
         '20000000-0000-0000-0000-000000000002'
       )

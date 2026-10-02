@@ -18,8 +18,10 @@ of Scenario suitability nor Product quantities.
 - Treat option eligibility as an independently authored demonstration
   assumption, never as a conclusion from catalogue-field similarity.
 - Store synthetic Product Requirements per Solution Option.
-- Assume the public demonstration visitor is the authorized Team Leader.
-- Persist the selected option through one constrained, conflict-aware command.
+- Allow public preview, but require the authenticated Demo Team Leader session
+  accepted in [ADR-006](ADR-006-demo-authentication-boundary.md) before write.
+- Persist the selected option through one authenticated, constrained,
+  conflict-aware command.
 - Allow selection to persist when its recalculated result is `SHORTAGE` or
   `UNKNOWN`; selection records the plan, while status reports material evidence.
 - Recalculate the existing `READY`, `SHORTAGE`, and `UNKNOWN` statuses after a
@@ -36,8 +38,8 @@ mutation unavailable to the public browser.
 
 ## Consequences
 
-- The public demo has shared mutable state and a deliberately weak identity
-  assumption. This is not a production authorization design.
+- The public demo has shared mutable state. Its one pre-provisioned account is a
+  bounded demonstration identity, not a production authorization design.
 - Work Package, Product usage, Aggregate Readiness, and Shortage Summary queries
   must all resolve requirements through the selected Solution Option.
 - Existing readiness status semantics remain unchanged. Two Work Packages may

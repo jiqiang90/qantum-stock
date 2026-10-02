@@ -19,15 +19,16 @@ in an existing communication channel.
 **Desired outcome:** know whether the visit can proceed and, if not, leave with
 a concise evidence-based summary that can be handed off without retyping.
 
-This slice does not prove the user's real role, send a notification, create an
-Operations task, or track resolution.
+This slice does not prove the user's real organisational role, send a
+notification, create an Operations task, or track resolution.
 
 ## Working assumptions
 
-1. The demo is public and assumes the current visitor is the Team Leader; no
-   production identity or tenancy model is inferred from the brief. Direct table
-   writes remain denied, with one constrained selected-Solution command defined
-   by the extension specification.
+1. The demo is publicly readable. Persisting a Selected Solution requires one
+   pre-provisioned Demo Team Leader account as defined by the extension
+   specification. This bounded identity does not infer a production role,
+   Project membership, work ownership, or tenancy model from the brief. Direct
+   table writes remain denied.
 2. One Work Package represents one planned Scenario with one selected
    source-backed Solution Option from the selected Ryanfire catalogue subset.
 3. Solution Options, SolutionProduct associations, option-owned Product
@@ -59,11 +60,12 @@ journey can be designed later if a real planning user and authoritative source
 are established.
 
 The seed preserves twelve exact Solution rows selected from the received
-catalogue excerpt. Four are nominated by the six Work Packages below; eight
-remain catalogue coverage only. Each source row is still a Solution, not a
-Product Requirement or Inventory Snapshot. Products, Product Codes, mappings,
-Work Packages, quantities, and Inventory Snapshots remain synthetic and do not
-claim that a Product is approved or compliant for a source-backed Solution.
+catalogue excerpt. Four are initially selected by the six Work Packages below,
+five more serve as eligible alternatives, and three remain catalogue coverage
+only. Each source row is still a Solution, not a Product Requirement or
+Inventory Snapshot. Products, Product Codes, mappings, Work Packages,
+quantities, and Inventory Snapshots remain synthetic and do not claim that a
+Product is approved or compliant for a source-backed Solution.
 
 | Work Package                         | Product evidence                                                     | Expected result                                   |
 | ------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------- |
@@ -110,7 +112,8 @@ this slice.
 - A deterministic, selectable plain-text Shortage Summary.
 - Clipboard feedback that distinguishes `Copied` from `Sent`.
 
-No runtime write is produced.
+The Shortage Summary produces no runtime write. Persisting a selected Solution
+is the one separately specified write in this expanded First Slice.
 
 ## User journey
 
@@ -295,9 +298,10 @@ delivery when the evidence is unavailable.
 
 ## Non-functional requirements
 
-- Supabase's public runtime role has read access to required demo data and may
-  execute only the constrained selected-Solution command; direct table mutation
-  remains denied.
+- Supabase's anonymous runtime role has read access to required demo data but
+  cannot execute the selected-Solution command. The authenticated role may
+  read the same data and execute only that constrained command; direct table
+  mutation remains denied.
 - No service-role key is exposed to application or browser runtime.
 - Untrusted route/form data is validated with Zod at its boundary.
 - Domain and summary-building logic are framework-independent and unit-tested.
@@ -310,7 +314,9 @@ delivery when the evidence is unavailable.
 
 ## Explicit exclusions
 
-- Authentication, Team Leader role authorization, tenancy, and work ownership.
+- Self-service accounts, password recovery, user administration, production
+  Team Leader role authorization, tenancy, Project membership, and work
+  ownership.
 - Persisted Shortage Reports, IDs, history, refresh recovery, or audit trail.
 - Recipient selection, Operations inbox, assignment, notification, delivery
   confirmation, or resolution.

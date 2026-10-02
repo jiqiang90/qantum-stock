@@ -10,7 +10,8 @@ design, quality strategy, engineering process, and changing execution records.
 2. [`specs/material-readiness.md`](specs/material-readiness.md) — the accepted
    First Slice contract, requirements, acceptance criteria, and exclusions.
 3. [`specs/solution-selection.md`](specs/solution-selection.md) — the accepted
-   persisted Solution-selection extension and its no-reservation boundary.
+   public-preview/authenticated-write Solution-selection extension and its
+   no-reservation boundary.
 4. [`specs/product-explorer.md`](specs/product-explorer.md) — the approved and
    demonstrated read-only Product discovery extension and its explicit
    non-goals.

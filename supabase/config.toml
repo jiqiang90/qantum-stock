@@ -69,7 +69,7 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
-sql_paths = ["./seed.sql"]
+sql_paths = ["./seed.sql", "./seeds/02_product_requirements.sql"]
 
 [db.network_restrictions]
 # Enable management of network restrictions.
@@ -154,8 +154,8 @@ max_indexes = 5
 # [storage.vector.buckets.documents-openai]
 
 [auth]
-# Keep the local key infrastructure used by supabase-js; the slice has no
-# authentication flow and does not permit account creation.
+# Support a pre-provisioned Demo Team Leader; self-service account creation is
+# disabled for this bounded authentication flow.
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
@@ -221,7 +221,7 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-enable_signup = true
+enable_signup = false
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

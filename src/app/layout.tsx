@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 import { AppNavigation } from "@/components/app-navigation";
+import { AuthStatus } from "@/modules/auth/auth-status";
+import { createAuthService } from "@/modules/auth/create-auth-service";
+
+import { signOutAction } from "./auth-actions";
 
 import "./globals.css";
 
@@ -9,11 +13,13 @@ export const metadata: Metadata = {
   description: "Pre-site material readiness for passive fire team leaders.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const actor = await (await createAuthService()).currentActor();
+
   return (
     <html lang="en">
       <body>
@@ -40,9 +46,7 @@ export default function RootLayout({
                 <p className="text-xs text-slate-300">Field readiness</p>
               </div>
             </div>
-            <p className="text-xs font-semibold tracking-[0.12em] text-slate-300 uppercase">
-              Read-only demo
-            </p>
+            <AuthStatus actor={actor} signOutAction={signOutAction} />
           </div>
           <AppNavigation />
         </header>

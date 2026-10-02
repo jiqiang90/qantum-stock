@@ -17,13 +17,17 @@ First Slice.
   human must start Supabase first or the command owns start/reset/cleanup.
 - Extend CI to start/reset Supabase, run database and application checks, build,
   and run Playwright.
+- Provision a deterministic local/CI Demo Team Leader through test setup, with
+  credentials supplied by CI secrets rather than repository files or logs.
 - Install the Playwright Chromium browser and required OS dependencies in CI.
 - Increase the workflow timeout from the 10-minute foundation value to a
   measured value, initially capped at 20 minutes.
 - Upload Playwright traces, screenshots, and reports only on failure.
 
-The journey is: list -> shortage Work Package -> evidence -> select blocker ->
-add note -> preview -> copy. The clipboard is controlled deterministically.
+The journey is: public list -> Work Package -> preview Solution Option -> prove
+anonymous write is denied -> sign in -> persist a shortage-producing option ->
+inspect recalculated evidence -> select blocker -> add note -> preview -> copy ->
+sign out. The clipboard is controlled deterministically.
 
 ## Acceptance criteria
 
@@ -37,6 +41,8 @@ add note -> preview -> copy. The clipboard is controlled deterministically.
       state between runs.
 - [ ] `npm run verify` names only checks that exist and pass locally.
 - [ ] The browser assertion distinguishes copied text from sent content.
+- [ ] The journey proves public read, authenticated write, and read-only behavior
+      after sign-out without printing credentials.
 - [ ] CI success is not described as deployment or public-runtime evidence.
 
 ## Execution checklist
@@ -46,6 +52,8 @@ add note -> preview -> copy. The clipboard is controlled deterministically.
       delivery journey and grant or stub clipboard access deterministically.
 - [ ] Add only deterministic seed references or test hooks required by the
       journey.
+- [ ] Create the test Auth account outside public seed tables and pass its
+      credentials to Playwright through local/CI environment variables.
 - [ ] Run the journey twice from clean resets to detect leaked state.
 - [ ] Extend CI with Supabase lifecycle, Playwright installation, failure
       artifact upload, and a measured timeout; reproduce every command locally.

@@ -49,18 +49,17 @@ catalogue or a full 148-row import.
 | `0510`        | `V22.35-22SFR00072-181-C` | Ryanfire | Ceiling     | FR plasterboard, FR plasterboard ceiling (1 layer 16mm)  | Electrical Penetration | PVC Conduit                      | Ø25mm  | 60        | 60         | PVC Conduit              | Plasterboard Ceiling | Level 3 ceiling-conduit Work Package           |
 | `0334`        | `V1.11-22SFR00038-146-E`  | Ryanfire | Wall        | FR plasterboard, FR plasterboard wall (1 layer 13mm)     | Non-Combustible Pipe   | Copper Pipe                      | Ø100mm | 60        | `-`        | Copper Pipe              | Plasterboard Wall    | Catalogue coverage only                        |
 | `0375`        | `V15.1-21SFR00018-130-D`  | Ryanfire | Wall        | FR plasterboard, FR plasterboard wall (2 layers 13mm)    | Insulated Pipe         | `Copper Pipe  - 50mm Fibreglass` | Ø32mm  | 60        | 60         | Insulated Copper Pipe    | Plasterboard Wall    | Catalogue coverage only                        |
-| `0521`        | `V22.44-22SFR00074-171-C` | Ryanfire | Floor       | Concrete, 125mm concrete floor                           | Combustible Pipe       | PVC Pipe                         | Ø100mm | 60        | 60         | PVC Pipe                 | Concrete Floor       | Catalogue coverage only                        |
-| `0512`        | `V22.36-23SFR00075-234-G` | Ryanfire | Floor       | CLT, 103mm CLT floor                                     | Combustible Pipe       | PVC Pipe                         | Ø80mm  | 60        | 60         | PVC Pipe                 | CLT Floor            | Catalogue coverage only                        |
-| `0455`        | `V21.30-22SFR00073-184-B` | Ryanfire | Wall        | KOROK®, KOROK® wall (78mm)                               | Combustible Pipe       | PVC Pipe                         | Ø65mm  | 120       | 120        | PVC Pipe                 | Korok Wall           | Catalogue coverage only                        |
-| `0677`        | `V29.24-21SFR00057-105-A` | Ryanfire | Ceiling     | FR plasterboard, FR plasterboard ceiling (1 layer 16mm)  | Electrical Penetration | Cable Bundle TPS                 | Ø100mm | 60        | 60         | Cable (Single or Bundle) | Plasterboard Ceiling | Catalogue coverage only                        |
-| `0470`        | `V21.42-23SFR00089-280-I` | Ryanfire | Wall        | AFS Logicwall®, AFS Logicwall®                           | Combustible Pipe       | PVC Pipe                         | Ø65mm  | 120       | 120        | PVC Pipe                 | AFS Logic Wall       | Catalogue coverage only                        |
+| `0521`        | `V22.44-22SFR00074-171-C` | Ryanfire | Floor       | Concrete, 125mm concrete floor                           | Combustible Pipe       | PVC Pipe                         | Ø100mm | 60        | 60         | PVC Pipe                 | Concrete Floor       | Alternative: Level 2 timber floor              |
+| `0512`        | `V22.36-23SFR00075-234-G` | Ryanfire | Floor       | CLT, 103mm CLT floor                                     | Combustible Pipe       | PVC Pipe                         | Ø80mm  | 60        | 60         | PVC Pipe                 | CLT Floor            | Alternative: Level 1 timber floor              |
+| `0455`        | `V21.30-22SFR00073-184-B` | Ryanfire | Wall        | KOROK®, KOROK® wall (78mm)                               | Combustible Pipe       | PVC Pipe                         | Ø65mm  | 120       | 120        | PVC Pipe                 | Korok Wall           | Alternative: Level 2 service riser             |
+| `0677`        | `V29.24-21SFR00057-105-A` | Ryanfire | Ceiling     | FR plasterboard, FR plasterboard ceiling (1 layer 16mm)  | Electrical Penetration | Cable Bundle TPS                 | Ø100mm | 60        | 60         | Cable (Single or Bundle) | Plasterboard Ceiling | Alternatives: east core and ceiling            |
+| `0470`        | `V21.42-23SFR00089-280-I` | Ryanfire | Wall        | AFS Logicwall®, AFS Logicwall®                           | Combustible Pipe       | PVC Pipe                         | Ø65mm  | 120       | 120        | PVC Pipe                 | AFS Logic Wall       | Alternative: Level 3 east riser                |
 | `0918`        | `V64.20-23SFR00097-266-B` | Ryanfire | Wall        | FR plasterboard, 190mm Glulam timber beam (1 layer 19mm) | Structural Penetration | Timber Beam                      | 190mm  | 120       | 120        | Timber Beam              | Plasterboard Wall    | Catalogue coverage only                        |
 
-All values above come from `data/solutions-excerpt.csv`. Four records support
-the current Work Package journey. Eight catalogue-only records add
-representative variation across orientation, substrate, service classification,
-service type, size, and fire-resistance requirements without adding invented
-operational scenarios.
+All values above come from `data/solutions-excerpt.csv`. Four records are the
+initial selections, five more support the eligible-alternative journey, and
+three remain catalogue-only. Eligibility and Product mappings are synthetic
+operational assumptions, not source or compliance evidence.
 
 ## Scope
 
@@ -68,8 +67,9 @@ operational scenarios.
 
 - Expand the `solutions` table to preserve the selected source fields.
 - Replace the four invented Solution records with the twelve exact rows above.
-- Map the six Work Packages to four of those source-backed Solutions. The other
-  eight records intentionally have no synthetic Product mapping or Work Package.
+- Initially select four source-backed Solutions across six Work Packages. Add
+  one independently authored alternative per Work Package. Nine Solutions have
+  synthetic Product mappings; three intentionally remain catalogue-only.
 - Expose a concise Solution reference and conditions in Work Package list/detail
   views without creating a Solution Explorer.
 - Reduce inconsistent synthetic Product data:
@@ -177,9 +177,9 @@ present in the excerpt.
 - Work Package list/detail pages display useful Solution provenance without
   adding a Solution management capability or overwhelming readiness evidence.
 
-These criteria describe the PF-003A baseline. The accepted PF-004B
-[`Scenario Solution Selection`](solution-selection.md) extension may associate
-additional rows from the same twelve-record subset with Work Packages and add
+These criteria describe the PF-003A baseline. The implemented PF-004B
+[`Scenario Solution Selection`](solution-selection.md) extension associates
+additional rows from the same twelve-record subset with Work Packages and adds
 synthetic option-specific Product mappings. It does not change any preserved
 catalogue field or treat those new associations as source evidence.
 
@@ -187,8 +187,9 @@ catalogue field or treat those new associations as source evidence.
 
 - Database schema tests cover required fields, non-blank constraints, and
   supplier-scoped identity uniqueness.
-- Database scenario tests assert the twelve exact source rows, the four
-  operational mappings, and the eight catalogue-only records.
+- Database scenario tests assert the twelve exact source rows, nine Solutions
+  with operational mappings, three catalogue-only records, and twelve eligible
+  options.
 - Adapter tests prove every source field maps without renaming or losing `-`.
 - Presentation tests cover the derived compact label and detail metadata.
 - Existing readiness, aggregate, Product Explorer, public-read policy, build,

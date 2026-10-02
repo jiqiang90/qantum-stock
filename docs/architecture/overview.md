@@ -2,14 +2,14 @@
 
 ## Architectural focus
 
-The implemented architecture supports Work Package and Product discovery plus
-individual and aggregate Material Readiness. It is a Next.js modular monolith
-with Supabase Postgres as the runtime data source.
+The implemented architecture supports Work Package and Product discovery,
+individual and aggregate Material Readiness, eligible Solution preview, and an
+authenticated selected-Solution write. It is a Next.js modular monolith with
+Supabase Postgres and Auth as runtime dependencies.
 
-Eligible Solution selection and the copyable Shortage Summary are designed next
-iterations, not executable capabilities in the current code. Their target seams
-are shown as Future below. Real authentication, reservation, notification,
-queue, second service, and generic frameworks remain unjustified.
+The copyable Shortage Summary is the next designed iteration. Production
+identity and authorization, reservation, notification, queue, second service,
+and generic frameworks remain unjustified.
 
 ## Module boundaries
 
@@ -20,8 +20,9 @@ flowchart LR
     RService --> RPort[Readiness repository port]
     RAdapter[Supabase readiness adapter] --> RPort
     RAdapter --> DB[(Supabase Postgres)]
-    UI -. Future .-> Select[Select Solution command]
-    Select -. Future .-> RService
+    UI --> Auth[Supabase Auth session]
+    UI --> Select[Select Solution command]
+    Select --> RService
     UI --> PService[ProductService]
     PService --> PPort[Product repository port]
     PAdapter[Supabase Product adapter] --> PPort
@@ -34,14 +35,14 @@ flowchart LR
     classDef boundary fill:#eef3ff,stroke:#355aa8,color:#102040;
     classDef future fill:#f8fafc,stroke:#64748b,stroke-dasharray:5 5,color:#334155;
     class Rules core;
-    class UI,RService,RPort,RAdapter,PService,PPort,PAdapter,DB boundary;
-    class Select,Summary,Clipboard future;
+    class UI,RService,RPort,RAdapter,PService,PPort,PAdapter,DB,Auth,Select boundary;
+    class Summary,Clipboard future;
 ```
 
 - **Readiness module:** a flat capability module containing framework-independent
   models and rules, `ReadinessService`, its small repository port, the Supabase
-  adapter, and focused list/detail components. A bounded Solution-selection
-  operation is a designed-only extension.
+  adapter, and focused list/detail components. It also owns Solution-option
+  preview and the bounded selection operation.
 - **Product module:** a flat read-only capability containing Product evidence,
   `ProductService`, its small repository port, the Supabase adapter, URL filter
   boundaries, and focused list/detail components. Reverse usage traverses the
@@ -59,7 +60,7 @@ integration, or focused presentation; pass-through layers are not kept.
 
 ## Service and constructor-injection boundary
 
-`ReadinessService` exposes list and detail operations. It receives the
+`ReadinessService` exposes list, detail, and selection operations. It receives the
 `ReadinessRepository` through explicit constructor injection, then applies the
 pure `assessReadiness` function to the returned evidence. Its tests use a
 controlled repository to prove orchestration without a dependency-injection
@@ -104,26 +105,31 @@ The adapter chooses the latest Inventory Snapshot deterministically by
 Product; an unmapped requirement cannot expose an orphan available quantity or
 snapshot time. Missing data remains missing; `0` remains numeric evidence.
 
-## Future selected Solution write flow — designed only
+## Selected Solution write flow
 
 ```mermaid
 sequenceDiagram
     actor TL as Team Leader
     participant Page as Work Package detail
+    participant Auth as Supabase Auth
     participant Service as ReadinessService
     participant Repo as Supabase adapter
     participant DB as Supabase Postgres command
 
     TL->>Page: Preview eligible Solution Option
-    Page->>Service: assessOption(workPackageId, optionId)
-    Service-->>Page: Requirements and READY / SHORTAGE / UNKNOWN
+    Page->>Page: Show precomputed option assessment
     TL->>Page: Use this Solution
+    alt No authenticated session
+        Page->>Auth: Sign in Demo Team Leader
+        Auth-->>Page: Request-scoped session
+    end
     Page->>Service: selectSolution(ids, expectedCurrentOptionId)
     Service->>Repo: Persist validated selection
     Repo->>DB: Conflict-aware constrained command
     DB-->>Repo: Committed selection or conflict
-    Repo-->>Service: Current Work Package evidence
-    Service-->>Page: Recalculated assessment
+    Service-->>Page: Selected option ID or structured failure
+    Page->>Service: Reload Work Package evidence
+    Service-->>Page: Current recalculated assessment
 ```
 
 Association with the Work Package makes a Solution selectable. This eligibility
@@ -183,7 +189,8 @@ sequenceDiagram
 ```
 
 The Product query follows
-`Product <- SolutionProduct <- Product Requirement <- Work Package`.
+`Product <- SolutionProduct <- Product Requirement <- Solution Option <- Work Package`
+and includes only the Work Package's selected option.
 It uses the mapping only to recover Work Package usage and makes no approval or
 compliance claim. The list count deduplicates Work Packages, while detail
 preserves every Product Requirement. Search and evidence filters are validated
@@ -221,10 +228,11 @@ was sent, reported, escalated, received, or resolved.
 
 ```mermaid
 erDiagram
-    SOLUTION ||--o{ WORK_PACKAGE : nominated_for
+    WORK_PACKAGE ||--|{ SOLUTION_OPTION : permits
+    SOLUTION ||--o{ SOLUTION_OPTION : offered_as
     SOLUTION ||--o{ SOLUTION_PRODUCT : defines
     PRODUCT ||--o{ SOLUTION_PRODUCT : identifies
-    WORK_PACKAGE ||--o{ PRODUCT_REQUIREMENT : contains
+    SOLUTION_OPTION ||--o{ PRODUCT_REQUIREMENT : contains
     SOLUTION_PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_source
     PRODUCT ||--o{ INVENTORY_SNAPSHOT : has
 
@@ -245,9 +253,14 @@ erDiagram
     }
     WORK_PACKAGE {
         uuid id PK
-        uuid solution_id FK
+        uuid selected_solution_option_id FK
         text name
         date planned_date
+    }
+    SOLUTION_OPTION {
+        uuid id PK
+        uuid work_package_id FK
+        uuid solution_id FK
     }
     PRODUCT {
         uuid id PK
@@ -267,7 +280,7 @@ erDiagram
     }
     PRODUCT_REQUIREMENT {
         uuid id PK
-        uuid work_package_id FK
+        uuid solution_option_id FK
         integer position
         uuid solution_product_id FK "nullable"
         text description
@@ -281,10 +294,10 @@ erDiagram
     }
 ```
 
-The diagram above represents the implemented read-only baseline. PF-004B
-migrates the fixed nominated Solution and Work-Package-owned requirements to
-Solution Options with option-owned requirements while keeping one selected
-option at a time. Each Product represents a concrete
+The diagram represents the implemented option-owned requirement model. A
+composite database constraint ensures the selected Solution Option belongs to
+the same Work Package, while mapping triggers ensure every resolved requirement
+uses a Product declared for that option's Solution. Each Product represents a concrete
 stock-tracked item with a unique synthetic `product_code`, specific name, flat
 category, manufacturer, supplier-facing code, variant, and description; generic
 material descriptions and units are not Product identities. These profile
@@ -292,16 +305,15 @@ fields are synthetic Product data. The Solution table preserves twelve selected
 catalogue fields exactly and derives display labels rather than persisting an
 invented name. `supplier + internal_code` is the source identity; the UUID
 remains the relational key. `SolutionProduct` is an internal association
-recording the Product set assumed for the four operationally used Solutions
-without storing quantities; eight catalogue-only Solutions intentionally have no
-mapping. Quantities remain Work Package-specific Product Requirements. Supplied
+recording the Product set assumed for the operationally used Solutions without
+storing quantities. Quantities remain option-specific Product Requirements. Supplied
 Solution `Internal Code` and `Supplier Ref. Code` values are never reused as
 Product identifiers. `ProductRequirement.solution_product_id` is nullable so
 the demo can explain an unresolved mapping, and `required_quantity` is nullable
 so it can explain missing demand evidence. Database triggers enforce that each
-resolved requirement uses an association belonging to its Work Package's
-nominated Solution, including when either side is updated. Negative pgTAP
-tests protect both write paths. An unmapped requirement cannot store a
+resolved requirement uses an association belonging to its option's Solution,
+including when either side is updated. Negative pgTAP
+tests protect the mapping paths. An unmapped requirement cannot store a
 quantity, because no Product-owned canonical unit is available to interpret it.
 Requirement and inventory rows do not repeat units; both
 quantities use the Product's canonical unit. The
@@ -321,18 +333,24 @@ fields, so it is not introduced.
 ## Public demo security boundary
 
 - Application runtime uses only the Supabase URL and publishable key.
-- The public database role can select only the tables/views required by the
-  demo. Direct insert, update, and delete are currently denied. The designed
-  Solution-selection extension adds only one constrained, conflict-aware command.
+- The anonymous database role can select only the tables/views required by the
+  demo. It cannot execute the Solution-selection command.
+- The authenticated Demo Team Leader role may execute only one constrained,
+  conflict-aware command and retains the same read access. Direct insert,
+  update, and delete remain denied.
+- Auth sessions are request-scoped and server-side. Sign-up, recovery, user
+  administration, production RBAC, tenancy, and Project membership are outside
+  the slice.
 - No service-role key is present in browser, server runtime, CI logs, or source.
 - Server-side query code narrows results and maps database rows into domain
   input. Database errors are translated before reaching the public UI.
 - Clipboard content is user-visible before copying. The application does not
   read existing clipboard contents.
 
-The public visitor is assumed to be the Team Leader for this demonstration.
-This is proportionate protection for synthetic demo data, not a production
-authorization or tenancy model.
+Anonymous visitors may inspect and preview the synthetic demonstration. The
+pre-provisioned authenticated account is treated as the Demo Team Leader only
+for the bounded selection command. This is not a production authorization or
+tenancy model.
 
 ## Important failure states
 
@@ -342,6 +360,7 @@ authorization or tenancy model.
 | Work Package missing                       | Explicit not-found state                     |
 | Product missing or route ID malformed      | Product-specific not-found state             |
 | Product, demand, or inventory missing      | `UNKNOWN` with a specific reason             |
+| Selection attempted without valid session  | Sign-in required; no state change            |
 | Selected Solution changed concurrently     | Conflict; reload current selection           |
 | Invalid or unrelated Solution Option       | Validation error; no state change            |
 | Invalid or unrelated blocker selection     | Validation error; no summary is produced     |
@@ -356,10 +375,10 @@ capability can route the issue to the Work Package's Project Manager. That role
 would coordinate Stores or Procurement, independent Alternative-Solution review,
 and a concrete Action Plan for the Team Leader.
 
-The future capability may add authentication, authorization, command handling,
-transactional storage, assignment, notification, and audit history while
-consuming the existing readiness evidence. No unused port, table, route, or
-placeholder is created now.
+The future capability may extend the bounded demo authentication into
+production role authorization and add command handling, transactional storage,
+assignment, notification, and audit history while consuming the existing
+readiness evidence. No unused port, table, route, or placeholder is created now.
 
 Other Production Gaps remain live inventory semantics, multiple locations,
 reservation and allocation, unit conversion, approval of Solutions outside the

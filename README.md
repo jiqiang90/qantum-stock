@@ -9,14 +9,15 @@ business communication channel before travelling to site.
 
 The application foundation, local quality tooling, baseline GitHub Actions run,
 Material Readiness calculation, reproducible local Supabase schema, the Work
-Package list/detail evidence view, and multi-package aggregate check are
-implemented and verified. A
+Package list/detail evidence view, multi-package aggregate check, eligible
+Solution preview and authenticated selection are implemented and locally
+verified. A
 read-only Product Explorer with URL-backed search, evidence filters, Product
 detail, and reverse Work Package usage is also demonstrated against local
 demo data. Twelve Solution records preserve fields from the supplied Ryanfire
 catalogue excerpt; Work Packages, Product mappings, quantities, and inventory
 remain synthetic assumptions. The Shortage Summary interaction,
-persisted Solution selection, database/browser CI stages, and public deployment
+database/browser CI stages, hosted reviewer credentials, and public deployment
 are not yet implemented.
 
 ## Quick start
@@ -63,13 +64,19 @@ npx playwright install chromium # first run on a new machine
 npm run test:e2e
 ```
 
-Run `npm run check` for the application quality gate. Playwright covers the
-selected-Work-Package aggregate journey and Product section overflow; database
-tests remain a separate `npm run db:test` gate.
+Run `npm run check` for the application quality gate. Playwright covers public
+Solution preview, authenticated selection, the selected-Work-Package aggregate
+journey, narrow-screen layout, and Product section overflow; database tests
+remain a separate `npm run db:test` gate.
 
 Before running the Supabase-backed UI, copy `.env.example` to `.env.local` and
 populate it with the local or hosted public Supabase URL and publishable key.
 No service-role credential is required by the application.
+
+For the local authenticated browser journey, provide a local-only service-role
+key and temporary `E2E_TEAM_LEADER_EMAIL` and `E2E_TEAM_LEADER_PASSWORD`, then
+run `npm run auth:provision-local`. The provisioning script refuses non-local
+Supabase URLs; none of these secrets belongs in application runtime or Git.
 
 ## Reviewer guide
 
@@ -94,7 +101,8 @@ decisions, and execution evidence.
 ## Planned demo scenario
 
 1. Open a Work Package and compare its eligible Solution Options.
-2. Preview and persist a different selected Solution, then inspect its
+2. Preview a different Solution publicly, sign in with the privately provided
+   Demo Team Leader account, and persist the selection, then inspect its
    recalculated `READY`, `SHORTAGE`, or `UNKNOWN` evidence.
 3. Select `Level 2 service riser firestopping` and `Level 3 east riser
 firestopping`. Their aggregate view exposes shared demand without reserving
@@ -105,9 +113,9 @@ firestopping`. Their aggregate view exposes shared demand without reserving
 6. Observe that the product says `Copied`, not `Sent`, and retains selectable
    text if clipboard access is unavailable.
 
-Solution selection is planned in PF-004B. Aggregate Readiness is implemented by
-PF-004. The Shortage Summary steps are the PF-005 boundary and are not yet
-implemented.
+Solution selection and its bounded authentication are implemented by PF-004B.
+Aggregate Readiness is implemented by PF-004. The Shortage Summary steps are the
+PF-005 boundary and are not yet implemented.
 
 The supporting Product Explorer can be reviewed independently by opening
 `/products`, applying a search or evidence filter, then following a Product to
@@ -118,9 +126,10 @@ claim Product administration, location, reservation, or compliance semantics.
 
 - Supabase Postgres is the runtime source of truth and local Supabase is the
   repeatable development/test environment.
-- The currently implemented surface is read-only. PF-004B adds only a constrained
-  selected-Solution write and assumes the visitor is the Team Leader. It does
-  not reserve inventory or provide production authentication.
+- Public reads and Solution previews remain anonymous. A pre-provisioned Demo
+  Team Leader account is required for the constrained selected-Solution write.
+  It does not reserve inventory or provide production role authorization,
+  tenancy, or work ownership.
 - The designed Shortage Summary will be copied into an existing business
   channel chosen by the user; that interaction is not implemented yet.
 - The supplied exercise brief and `data/solutions-excerpt.csv` catalogue are

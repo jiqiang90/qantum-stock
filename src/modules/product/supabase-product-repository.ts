@@ -25,10 +25,14 @@ const PRODUCT_SELECT = `
       position,
       description,
       required_quantity,
-      work_package:work_packages!product_requirements_work_package_id_fkey (
+      solution_option:solution_options!product_requirements_solution_option_id_fkey (
         id,
-        name,
-        planned_date
+        work_package:work_packages!solution_options_work_package_id_fkey (
+          id,
+          name,
+          planned_date,
+          selected_solution_option_id
+        )
       )
     )
   )
@@ -45,10 +49,14 @@ interface ProductUsageRow {
   readonly position: number;
   readonly description: string;
   readonly required_quantity: number | null;
-  readonly work_package: {
+  readonly solution_option: {
     readonly id: string;
-    readonly name: string;
-    readonly planned_date: string;
+    readonly work_package: {
+      readonly id: string;
+      readonly name: string;
+      readonly planned_date: string;
+      readonly selected_solution_option_id: string;
+    };
   };
 }
 
@@ -104,8 +112,12 @@ export class SupabaseProductRepository implements ProductRepository {
 
 export function mapProductRow(row: ProductRow): ProductEvidence {
   const latestSnapshot = selectLatestSnapshot(row.inventory_snapshots);
-  const usages = row.solution_products.flatMap(
-    ({ requirements }) => requirements,
+  const usages = row.solution_products.flatMap(({ requirements }) =>
+    requirements.filter(
+      ({ solution_option }) =>
+        solution_option.id ===
+        solution_option.work_package.selected_solution_option_id,
+    ),
   );
 
   return {
@@ -142,26 +154,29 @@ function selectLatestSnapshot(
 }
 
 function compareUsages(left: ProductUsageRow, right: ProductUsageRow): number {
+  const leftWorkPackage = left.solution_option.work_package;
+  const rightWorkPackage = right.solution_option.work_package;
+
   return (
-    left.work_package.planned_date.localeCompare(
-      right.work_package.planned_date,
-    ) ||
-    left.work_package.name.localeCompare(right.work_package.name, "en-NZ") ||
+    leftWorkPackage.planned_date.localeCompare(rightWorkPackage.planned_date) ||
+    leftWorkPackage.name.localeCompare(rightWorkPackage.name, "en-NZ") ||
     left.position - right.position ||
     left.id.localeCompare(right.id, "en-NZ")
   );
 }
 
 function mapUsage(usage: ProductUsageRow): ProductUsageEvidence {
+  const workPackage = usage.solution_option.work_package;
+
   return {
     requirementId: usage.id,
     position: usage.position,
     description: usage.description,
     requiredQuantity: usage.required_quantity,
     workPackage: {
-      id: usage.work_package.id,
-      name: usage.work_package.name,
-      plannedDate: usage.work_package.planned_date,
+      id: workPackage.id,
+      name: workPackage.name,
+      plannedDate: workPackage.planned_date,
     },
   };
 }

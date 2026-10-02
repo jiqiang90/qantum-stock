@@ -21,8 +21,8 @@ export function filterWorkPackages(
       return true;
     }
 
-    const { workPackage } = item;
-    const { solution } = workPackage;
+    const { workPackage, selectedOption } = item;
+    const { solution } = selectedOption;
     const searchableEvidence = [
       workPackage.name,
       solution.supplier,

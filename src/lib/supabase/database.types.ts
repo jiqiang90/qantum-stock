@@ -44,38 +44,38 @@ export type Database = {
           id: string;
           position: number;
           required_quantity: number | null;
+          solution_option_id: string;
           solution_product_id: string | null;
-          work_package_id: string;
         };
         Insert: {
           description: string;
           id: string;
           position: number;
           required_quantity?: number | null;
+          solution_option_id: string;
           solution_product_id?: string | null;
-          work_package_id: string;
         };
         Update: {
           description?: string;
           id?: string;
           position?: number;
           required_quantity?: number | null;
+          solution_option_id?: string;
           solution_product_id?: string | null;
-          work_package_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "product_requirements_solution_option_id_fkey";
+            columns: ["solution_option_id"];
+            isOneToOne: false;
+            referencedRelation: "solution_options";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "product_requirements_solution_product_id_fkey";
             columns: ["solution_product_id"];
             isOneToOne: false;
             referencedRelation: "solution_products";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "product_requirements_work_package_id_fkey";
-            columns: ["work_package_id"];
-            isOneToOne: false;
-            referencedRelation: "work_packages";
             referencedColumns: ["id"];
           },
         ];
@@ -115,6 +115,39 @@ export type Database = {
           variant?: string;
         };
         Relationships: [];
+      };
+      solution_options: {
+        Row: {
+          id: string;
+          solution_id: string;
+          work_package_id: string;
+        };
+        Insert: {
+          id: string;
+          solution_id: string;
+          work_package_id: string;
+        };
+        Update: {
+          id?: string;
+          solution_id?: string;
+          work_package_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "solution_options_solution_id_fkey";
+            columns: ["solution_id"];
+            isOneToOne: false;
+            referencedRelation: "solutions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "solution_options_work_package_id_fkey";
+            columns: ["work_package_id"];
+            isOneToOne: false;
+            referencedRelation: "work_packages";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       solution_products: {
         Row: {
@@ -202,27 +235,27 @@ export type Database = {
           id: string;
           name: string;
           planned_date: string;
-          solution_id: string;
+          selected_solution_option_id: string;
         };
         Insert: {
           id: string;
           name: string;
           planned_date: string;
-          solution_id: string;
+          selected_solution_option_id: string;
         };
         Update: {
           id?: string;
           name?: string;
           planned_date?: string;
-          solution_id?: string;
+          selected_solution_option_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "work_packages_solution_id_fkey";
-            columns: ["solution_id"];
+            foreignKeyName: "work_packages_selected_option_owner_fkey";
+            columns: ["id", "selected_solution_option_id"];
             isOneToOne: false;
-            referencedRelation: "solutions";
-            referencedColumns: ["id"];
+            referencedRelation: "solution_options";
+            referencedColumns: ["work_package_id", "id"];
           },
         ];
       };
@@ -231,7 +264,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      select_work_package_solution: {
+        Args: {
+          p_expected_current_option_id: string;
+          p_solution_option_id: string;
+          p_work_package_id: string;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       [_ in never]: never;

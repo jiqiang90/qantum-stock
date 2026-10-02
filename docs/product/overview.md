@@ -34,9 +34,10 @@ and the shortage handoff; reservation remains a later capability.
 - Product profile fields and SolutionProduct associations shown by the
   supporting Product Explorer are synthetic demonstration data. They make the
   slice executable but do not imply catalogue or compliance approval.
-- Twelve selected Solution rows preserve the supplied catalogue fields. Four
-  support the current Work Package journey and eight remain catalogue coverage
-  only; none provides an authoritative Product mapping or approval decision.
+- Twelve selected Solution rows preserve the supplied catalogue fields. Nine
+  support the current selected-or-alternative Work Package journey and three
+  remain catalogue coverage only; none provides an authoritative Product
+  mapping or approval decision.
 
 ### Context gaps
 
@@ -63,8 +64,10 @@ expanded First Slice.
 It tests one coherent user outcome: a Team Leader can select an eligible
 Solution for planned work, understand whether its materials are available,
 persist that planning choice, or prepare accurate portable shortage evidence.
-The public demonstration assumes the visitor is the authorized Team Leader;
-real authentication, tenancy, and work ownership remain Production Gaps.
+The public demonstration is anonymously readable, while persisting a Solution
+selection requires a pre-provisioned Demo Team Leader account. Full-site
+authentication, real role authorization, tenancy, and work ownership remain
+Production Gaps.
 Selecting a Solution does not reserve stock. Copying is intentionally not
 described as sending, reporting, or escalating because no recipient or delivery
 contract is established.
@@ -133,14 +136,15 @@ nodes are future capabilities.
 | Work Package list and evidence view     | First Slice       | Demonstrated with synthetic data |
 | Selected Work Package aggregate check   | First Slice       | Implemented                      |
 | Read-only Product Explorer              | Supporting demo   | Demonstrated with synthetic data |
-| Eligible Solution Options               | First Slice       | Designed only                    |
-| Persisted selected Solution             | First Slice       | Designed only                    |
+| Eligible Solution Options               | First Slice       | Demonstrated with synthetic data |
+| Persisted selected Solution             | First Slice       | Implemented                      |
+| Demo sign-in and authenticated write    | First Slice       | Implemented                      |
 | Copyable Shortage Summary               | First Slice       | Designed only                    |
 | Local Supabase demo data                | First Slice       | Implemented                      |
 | Hosted Supabase synthetic data          | First Slice       | Designed only                    |
 | Complete First Slice CI pipeline        | First Slice       | Designed only                    |
 | Public Vercel demonstration             | First Slice       | Designed only                    |
-| Real Team Leader authentication         | Future            | Production Gap                   |
+| Production identity and authorization   | Future            | Production Gap                   |
 | Recipient, assignment, and notification | Future            | Production Gap                   |
 | Resolution and audit history            | Future            | Designed only                    |
 | Live inventory and unit conversion      | Future            | Production Gap                   |

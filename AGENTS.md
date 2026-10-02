@@ -24,11 +24,12 @@ contract is `docs/specs/product-explorer.md`; the approved source-data
 correction is `docs/specs/source-backed-solutions.md`. Technical boundaries and
 accepted decisions live in `docs/architecture/overview.md` and
 `docs/architecture/decisions/`.
-Treat each document as authoritative for its concern. Do not expand the slice
-into real authentication, persistent reports, recipients, assignment,
-notifications, purchasing, reservation, allocation, stock management,
-scheduling, Alternative-Solution approval outside the eligible option set,
-offline sync, or administration.
+Treat each document as authoritative for its concern. The slice includes only
+the bounded public-read/authenticated-write demonstration boundary in ADR-006;
+do not expand it into production identity, self-service accounts, RBAC, tenancy,
+persistent reports, recipients, assignment, notifications, purchasing,
+reservation, allocation, stock management, scheduling, Alternative-Solution
+approval outside the eligible option set, offline sync, or administration.
 
 The supplied `data/solutions-excerpt.csv` is ignored local reference material
 and must not enter Git history or become a runtime dependency. Each row
@@ -147,12 +148,14 @@ proof that a fire-stopping solution is compliant or approved.
   Work Package readiness.
 - Browser code may use only the public Supabase URL and publishable key.
 - Never expose or commit a service-role key.
-- The demonstration assumes the current visitor is a Team Leader authorized to
-  select an eligible Solution for every Work Package. Do not present this as a
-  production authentication or tenancy model.
+- Anonymous visitors may read and preview the demonstration. Only the
+  pre-provisioned authenticated Demo Team Leader may select an eligible Solution
+  for a Work Package. Do not present this as production role authorization or a
+  tenancy model.
 - Exposed synthetic-data tables must reject public insert, update, and delete.
-  The public role may execute only the constrained, conflict-aware selected-
-  Solution command defined by `docs/specs/solution-selection.md`.
+  The anonymous role cannot execute the selected-Solution command. The
+  authenticated role may execute only the constrained, conflict-aware command
+  defined by `docs/specs/solution-selection.md`.
 - The Shortage Summary exists only in presentation/application memory and the
   user's clipboard. It has no ID, recipient, delivery state, or audit claim.
 

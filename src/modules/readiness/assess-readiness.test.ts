@@ -379,28 +379,37 @@ function selectedWorkPackage(
   id: string,
   requirements: readonly RequirementEvidenceInput[],
 ): WorkPackageReadiness {
+  const option = {
+    id: `option-${id}`,
+    solution: {
+      id: `solution-${id}`,
+      internalCode: "0444",
+      supplierRefCode: "V21.2-21SFR00051-98-A",
+      supplier: "Ryanfire",
+      orientation: "Wall",
+      substrate: "FR plasterboard, FR plasterboard wall (1 layer 13mm)",
+      serviceClassification: "Combustible Pipe",
+      serviceType: "PVC Pipe",
+      serviceSize: "Ø40mm",
+      integrity: "60",
+      insulation: "60",
+      serviceTypeOption: "PVC Pipe",
+      substrateOption: "Plasterboard Wall",
+    },
+    requirements,
+  };
+  const assessment = assessReadiness(requirements);
+
   return {
     workPackage: {
       id,
       name: `Work Package ${id}`,
       plannedDate: "2026-10-08",
-      solution: {
-        id: `solution-${id}`,
-        internalCode: "0444",
-        supplierRefCode: "V21.2-21SFR00051-98-A",
-        supplier: "Ryanfire",
-        orientation: "Wall",
-        substrate: "FR plasterboard, FR plasterboard wall (1 layer 13mm)",
-        serviceClassification: "Combustible Pipe",
-        serviceType: "PVC Pipe",
-        serviceSize: "Ø40mm",
-        integrity: "60",
-        insulation: "60",
-        serviceTypeOption: "PVC Pipe",
-        substrateOption: "Plasterboard Wall",
-      },
-      requirements,
+      selectedSolutionOptionId: option.id,
+      solutionOptions: [option],
     },
-    assessment: assessReadiness(requirements),
+    selectedOption: option,
+    assessment,
+    solutionOptions: [{ option, assessment, selected: true }],
   };
 }

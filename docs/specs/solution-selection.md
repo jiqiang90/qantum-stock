@@ -3,7 +3,7 @@
 ## Status
 
 - **Delivery boundary:** expanded First Slice
-- **Capability status:** Designed only
+- **Capability status:** Implemented and locally verified; hosted delivery pending
 - **Implementation work item:** `tasks/PF-004B-solution-selection.md`
 
 This specification extends Material Readiness with one bounded write: a Team
@@ -14,9 +14,10 @@ Product Requirements.
 ## Confirmed demonstration assumptions
 
 1. One Work Package represents one planned installation Scenario.
-2. The current visitor acts as the Team Leader and may change the selected
-   Solution for every demonstration Work Package. Login, tenancy, and real role
-   authorization remain Production Gaps.
+2. Anyone may read and preview the public demonstration. Persisting a Selected
+   Solution requires a signed-in, pre-provisioned Demo Team Leader account.
+   Organisation, Project, work-ownership, and real role authorization remain
+   Production Gaps.
 3. A Solution row is selectable only when an independently authored Solution
    Option associates it with that Work Package. Association means “eligible for
    this demonstration Scenario”; catalogue-field similarity alone does not
@@ -47,11 +48,18 @@ future technical/compliance approval workflow before becoming selectable.
 2. Review its eligible Solution Options and current selected option.
 3. Preview each option's Product Requirements and calculated status.
 4. Choose `Use this Solution` for one eligible option.
-5. The system persists that option as the selected Solution.
-6. The detail page, list status, Product usage, Aggregate Readiness, and any
+5. If not signed in, authenticate with the privately provided Demo Team Leader
+   account and return to the same Work Package decision.
+6. The system persists that option as the selected Solution.
+7. The detail page, list status, Product usage, Aggregate Readiness, and any
    Shortage Summary use the newly selected option.
-7. If the write fails or a concurrent write makes the request stale, the prior
-   selection remains and the UI reloads current evidence.
+8. If the session has expired, the write fails, or a concurrent write makes the
+   request stale, the prior selection remains and the UI reloads current
+   evidence.
+
+Public preview does not require a session. Sign-in, sign-out, session recovery,
+and the write gate are part of this extension; self-service sign-up, password
+recovery, user administration, and production RBAC are not.
 
 ## Status and quantity rules
 
@@ -102,21 +110,25 @@ selectSolution(workPackageId, solutionOptionId, expectedCurrentOptionId)
 
 The command must:
 
-1. validate all IDs at the application boundary;
-2. verify the option belongs to the Work Package;
-3. compare `expectedCurrentOptionId` to prevent silent lost updates;
-4. update only the selected option in one database statement or transaction;
-5. be idempotent when the requested option is already selected; and
-6. return the committed assessment or a structured conflict.
+1. require an authenticated Supabase session;
+2. validate all IDs at the application boundary;
+3. verify the option belongs to the Work Package;
+4. compare `expectedCurrentOptionId` to prevent silent lost updates;
+5. update only the selected option in one database statement or transaction;
+6. be idempotent when the requested option is already selected; and
+7. return the selected option ID or a structured failure, then reload the page
+   to calculate readiness from current committed evidence.
 
-Direct browser writes to tables remain denied. The public Supabase role may
-execute only the constrained selection command required by the demonstration.
-No service-role key is exposed.
+Direct browser writes to tables remain denied. The anonymous Supabase role may
+read the demonstration but cannot execute the selection command. The
+authenticated role retains the same read access and may execute only that
+constrained command. No service-role key is exposed.
 
 ## Failure behaviour
 
 | Condition                            | Result                                                  |
 | ------------------------------------ | ------------------------------------------------------- |
+| Missing or expired session           | Authentication response; no state change                |
 | Unknown option or wrong Work Package | Validation/not-found response; no state change          |
 | Option has incomplete evidence       | Selection may persist; resulting status is `UNKNOWN`    |
 | Option has insufficient stock        | Selection may persist; resulting status is `SHORTAGE`   |
@@ -147,10 +159,13 @@ and again after persistence.
   current selected option and still counts shared inventory only once.
 - **SS-10:** the interface explicitly states that selecting a Solution does not
   reserve stock.
-- **SS-11:** direct public insert, update, and delete remain denied; only the
-  constrained selection command is executable.
-- **SS-12:** keyboard and narrow/mobile users can compare, preview, select, and
-  recover from a conflict.
+- **SS-11:** direct anonymous and authenticated table insert, update, and delete
+  remain denied; only the authenticated constrained command is executable.
+- **SS-12:** anonymous visitors can read and preview but cannot persist;
+  authenticated visitors can select, sign out, and recover honestly from an
+  expired session.
+- **SS-13:** keyboard and narrow/mobile users can compare, preview, sign in,
+  select, and recover from a conflict.
 
 ## Non-functional requirements
 
@@ -158,6 +173,10 @@ and again after persistence.
 - Domain calculations remain framework-independent and testable without React,
   Next.js, or Supabase.
 - Public errors reveal no database internals or credentials.
+- Authentication uses request-scoped server session handling. Demo credentials
+  are never committed, seeded into public tables, or exposed in client code.
+- The mutation accepts only the server-verified session identity and a
+  same-origin request; no user ID or role supplied by the browser is trusted.
 - The interface communicates eligibility and no-reservation semantics once at
   the decision point rather than repeating warnings on every row.
 
@@ -165,8 +184,20 @@ and again after persistence.
 
 - Material reservation, allocation, stock locking, expiry, or release.
 - `AVAILABLE` or `RESERVED` statuses.
-- Login, real Team Leader authentication, tenancy, and production authorization.
+- Self-service sign-up, password recovery, user/profile administration, MFA,
+  multiple roles, tenancy, Project membership, and production authorization.
 - Approval of catalogue Solutions not already associated as Solution Options.
 - Multiple supply locations, transfers, incoming stock, delivery dates, safety
   stock, packaging, or unit conversion.
 - Crew scheduling and Material Shortage Notice delivery.
+
+## Auth risks and mitigations
+
+| Risk                                                   | Mitigation                                                            |
+| ------------------------------------------------------ | --------------------------------------------------------------------- |
+| Authentication is mistaken for production RBAC         | Label the account Demo Team Leader; keep production roles out         |
+| Signing in removes access to public evidence           | Grant identical SELECT policies to anon and authenticated roles       |
+| Browser supplies a forged identity or cross-site write | Resolve identity server-side and require same-origin mutation         |
+| Session expires between preview and confirmation       | Recheck on every write; preserve selection and prompt sign-in         |
+| Shared demo state drifts between reviewer visits       | Limit writes to reversible eligible options; reset before tests       |
+| Credentials enter repository or public artifacts       | Provision outside Git; use ignored local env and protected CI secrets |

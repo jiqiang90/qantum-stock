@@ -1,7 +1,8 @@
 # ADR-001: Runtime Data and Public Hosting
 
 - Status: Partially superseded by
-  [ADR-005](ADR-005-solution-selection.md)
+  [ADR-005](ADR-005-solution-selection.md) and
+  [ADR-006](ADR-006-demo-authentication-boundary.md)
 - Date: 2026-10-02
 
 ## Context
@@ -16,9 +17,12 @@ selected-Solution write.
 
 - Use Supabase Postgres for local and hosted runtime data.
 - Use versioned migrations and deterministic synthetic seed data.
-- Give the public runtime role read access to the minimum demo dataset and
-  execute access only to the constrained selected-Solution command.
-- Do not add Supabase Auth, general write policies, or persisted Shortage Reports.
+- Give the anonymous and authenticated runtime roles read access to the same
+  minimum demo dataset.
+- Require the authenticated role for the constrained selected-Solution command;
+  keep direct table writes denied to both runtime roles.
+- Add only the bounded Supabase Auth behavior accepted in ADR-006. Do not add
+  self-service accounts, general write policies, or persisted Shortage Reports.
 - Deploy the Next.js application to Vercel only when external setup is
   authorized.
 - Keep the supplied CSV ignored and outside the runtime path.
@@ -26,9 +30,9 @@ selected-Solution write.
 ## Why
 
 Supabase provides one PostgreSQL model for repeatable local tests and a hosted
-demo. Keeping direct table access read-only and adding one bounded command avoids
-inventing a general administration surface. The demonstration explicitly
-assumes the visitor is the Team Leader; that assumption is not production auth.
+demo. Keeping direct table access read-only and protecting one bounded command
+avoids inventing a general administration surface. Authentication identifies
+the pre-provisioned demo user; it is not a production role or tenancy model.
 
 ## Alternatives considered
 
@@ -49,5 +53,6 @@ assumes the visitor is the Team Leader; that assumption is not production auth.
   must be tested.
 - The app remains useful if the summary is copied, but it cannot recover summary
   history after navigation or prove that anyone received it.
-- Authentication and persistent handoff require a later ADR once identity,
-  recipient, ownership, and tenancy are known.
+- Production-wide authentication, role authorization, ownership, tenancy, and
+  persistent handoff require later decisions once their business contracts are
+  known.

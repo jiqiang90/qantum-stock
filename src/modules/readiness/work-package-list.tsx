@@ -102,7 +102,7 @@ export function WorkPackageList({
               <DataTableHeaderCell>Status</DataTableHeaderCell>
             </DataTableHead>
             <DataTableBody>
-              {items.map(({ workPackage, assessment }) => (
+              {items.map(({ workPackage, selectedOption, assessment }) => (
                 <DataTableRow key={workPackage.id}>
                   <DataTableCell label="Compare">
                     <input
@@ -126,7 +126,7 @@ export function WorkPackageList({
                     </Link>
                   </DataTableCell>
                   <DataTableCell label="Solution">
-                    {formatSolutionLabel(workPackage.solution)}
+                    {formatSolutionLabel(selectedOption.solution)}
                   </DataTableCell>
                   <DataTableCell label="Status">
                     <ReadinessStatusBadge status={assessment.status} />

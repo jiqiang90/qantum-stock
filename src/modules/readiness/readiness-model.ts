@@ -69,13 +69,27 @@ export interface WorkPackageEvidence {
   readonly id: string;
   readonly name: string;
   readonly plannedDate: string;
+  readonly selectedSolutionOptionId: string;
+  readonly solutionOptions: readonly SolutionOptionEvidence[];
+}
+
+export interface SolutionOptionEvidence {
+  readonly id: string;
   readonly solution: SolutionReference;
   readonly requirements: readonly RequirementEvidenceInput[];
 }
 
+export interface SolutionOptionReadiness {
+  readonly option: SolutionOptionEvidence;
+  readonly assessment: ReadinessAssessment;
+  readonly selected: boolean;
+}
+
 export interface WorkPackageReadiness {
   readonly workPackage: WorkPackageEvidence;
+  readonly selectedOption: SolutionOptionEvidence;
   readonly assessment: ReadinessAssessment;
+  readonly solutionOptions: readonly SolutionOptionReadiness[];
 }
 
 export interface AggregateProductAssessment {
@@ -100,3 +114,18 @@ export interface WorkPackageSelectionAssessment {
   readonly unmappedRequirementCount: number;
   readonly workPackagesWithoutRequirements: number;
 }
+
+export interface SelectSolutionCommand {
+  readonly workPackageId: string;
+  readonly solutionOptionId: string;
+  readonly expectedCurrentOptionId: string;
+}
+
+export type PersistSolutionSelectionResult =
+  | { readonly status: "selected"; readonly selectedOptionId: string }
+  | {
+      readonly status:
+        "unauthenticated" | "invalid" | "conflict" | "unavailable";
+    };
+
+export type SelectionFeedback = "conflict" | "invalid" | "unavailable" | null;

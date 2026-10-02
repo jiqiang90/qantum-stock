@@ -18,8 +18,10 @@ Entries prefixed `Future` are designed test obligations, not current evidence.
 | Missing data or zero represented incorrectly    | Domain tests plus Supabase adapter mapping tests   |
 | Database shape or latest-snapshot query drifts  | pgTAP schema/query tests and adapter tests         |
 | Source Solution text is normalized or invented  | Exact-row pgTAP and adapter/presentation tests     |
-| Public role can mutate data outside selection   | Denied table writes; Future command tests          |
-| Unrelated or stale Solution selection persists  | Future: command, service, and database tests       |
+| Anonymous visitor can persist a selection       | Auth and command-permission tests                  |
+| Runtime role can mutate tables directly         | Denied table-write tests for both runtime roles    |
+| Session expires during a selection              | Route/service and presentation tests               |
+| Unrelated or stale Solution selection persists  | Command, service, and database tests               |
 | Product search/filter or usage count is wrong   | Product service and boundary tests                 |
 | Product usage or latest Inventory maps wrongly  | Product adapter and presentation tests             |
 | Wrong blockers enter the summary                | Future: summary-builder validation/unit tests      |
@@ -53,9 +55,13 @@ Supabase, or browser API.
   the database boundary without trimming, parsing, or losing literal values such
   as `-` and doubled spaces.
 - The latest Inventory Snapshot ordering is deterministic.
-- Future Solution-selection tests will prove option preview is side-effect free,
+- Solution-selection tests prove option preview is side-effect free,
   an option belongs to its Work Package, repeated selection is idempotent, and a
   stale expected-current option becomes a structured conflict.
+- Auth boundary tests prove anonymous preview remains available,
+  authenticated users retain the same reads, sign-in and sign-out change only
+  mutation capability, a missing or expired session cannot reach persistence,
+  and authentication failures preserve the prior selection.
 - `ProductService` tests prove trimmed case-insensitive search, usage and
   Inventory-evidence filters, combinations, deterministic ordering, and unique
   referencing-Work-Package counts without hiding duplicate requirements.
@@ -72,16 +78,17 @@ Supabase, or browser API.
 
 Start from a clean migration and seed. Prove constraints, non-negative
 quantities, relationships, Product Code uniqueness, canonical-unit ownership,
-the twelve exact source-backed Solution rows, four mapped and eight
-catalogue-only Solutions, the six-Work-Package multi-Product scenario matrix,
+the twelve exact source-backed Solution rows, nine mapped and three
+catalogue-only Solutions, the six-Work-Package/twelve-option scenario matrix,
 deterministic latest-snapshot selection,
-allowed public reads, and denied public insert, update, and delete. Future
-Solution-selection database tests will prove execution of only the constrained
+allowed public reads, and denied anonymous/authenticated insert, update, and
+delete. Solution-selection database tests prove that anonymous command
+execution is denied and only the authenticated role can execute the constrained
 command.
 
-There are no authentication, creator-isolation, reservation, or stock-allocation
-tests. The demonstration assumes the visitor is the Team Leader; database tests
-must not imply that this is production authorization.
+There are no production role, Project-membership, tenant-isolation, reservation,
+or stock-allocation tests. The single authenticated account represents only the
+Demo Team Leader write boundary; tests must not imply production authorization.
 
 ### Presentation tests
 
@@ -92,9 +99,10 @@ cover navigation, GET controls, known/unknown/zero Inventory evidence,
 filtered-empty recovery, and requirement-level Work Package links. Aggregate
 presentation tests cover Work Package selection, the two-package minimum,
 Product totals, and the explicit no-reservation/no-allocation boundary.
-Future Solution Option presentation tests will cover preview, confirmation,
-successful selection, dependency failure, stale-write conflict, and the explicit
-statement that choosing a Solution does not reserve inventory.
+Solution Option presentation tests cover public preview, sign-in gating,
+selection payload, success and failure feedback, stale-write conflict, and the
+explicit statement that choosing a Solution does not reserve inventory. Auth
+service and gateway tests cover sign-in, sign-out, and missing-session behavior.
 
 ### Browser journeys
 
@@ -104,7 +112,11 @@ The currently implemented Playwright journeys cover:
   their shared sealant demand is displayed as `10 cartridge` required, `8
 cartridge` available, and `2 cartridge` missing; and
 - navigating between Product detail sections without introducing vertical page
-  overflow.
+  overflow;
+- previewing a Solution anonymously without persistence at a narrow viewport;
+  and
+- signing in with an externally provisioned local account, persisting an
+  eligible option, observing the recalculated evidence, and signing out.
 
 These tests protect concrete route and responsive behavior without repeating
 every domain case.
@@ -117,9 +129,10 @@ It will verify summary content and confirm the UI never claims it was sent.
 Clipboard success may be stubbed deterministically; the failure fallback belongs
 at the presentation boundary.
 
-A future Solution-selection journey will preview an eligible option, persist it,
-observe the recalculated Work Package status and requirements, and verify that
-Product usage and Aggregate Readiness consume the same selected option.
+The Solution-selection journey uses environment-provided credentials and a
+localhost-only provisioning script. Product adapter and aggregate regression
+tests prove their views consume the current selected option without duplicating
+the browser journey.
 
 ## Required quality gate
 
@@ -152,6 +165,8 @@ CI execution, deployment, and public-runtime verification are separate claims.
 - Confirm the product says `Copied`, not `Sent`, `Reported`, or `Escalated`.
 - Compare and select a Solution Option using only the keyboard, then confirm the
   page communicates that no inventory was reserved.
+- Confirm an anonymous reviewer can inspect the full demo, while selection asks
+  for sign-in and sign-out visibly restores read-only behavior.
 
 ## Evidence rules
 
