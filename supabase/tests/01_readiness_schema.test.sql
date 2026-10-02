@@ -353,6 +353,16 @@ select throws_ok(
 
 select lives_ok(
   $$
+    insert into public.solution_products (
+      id,
+      solution_id,
+      product_id
+    ) values (
+      '6fffffff-0000-0000-0000-000000000099',
+      '10000000-0000-0000-0000-000000000001',
+      '30000000-0000-0000-0000-000000000005'
+    );
+
     insert into public.product_requirements (
       id,
       solution_option_id,
@@ -365,7 +375,7 @@ select lives_ok(
       '70000000-0000-0000-0000-000000000001',
       99,
       'Verify zero required quantity remains known',
-      '60000000-0000-0000-0000-000000000001',
+      '6fffffff-0000-0000-0000-000000000099',
       0
     )
   $$,

@@ -1,6 +1,6 @@
 begin;
 
-select plan(19);
+select plan(21);
 
 select has_table(
   'public',
@@ -69,6 +69,59 @@ select is(
   ),
   0::bigint,
   'every mapped requirement belongs to its option Solution'
+);
+
+select throws_ok(
+  $$
+    insert into public.product_requirements (
+      id,
+      solution_option_id,
+      position,
+      description,
+      solution_product_id,
+      required_quantity
+    ) values (
+      '4fffffff-0000-0000-0000-000000000001',
+      '70000000-0000-0000-0000-000000000001',
+      99,
+      'Duplicate mapped Product demand',
+      '60000000-0000-0000-0000-000000000001',
+      1
+    )
+  $$,
+  '23505',
+  'duplicate key value violates unique constraint "product_requirements_option_product_unique"',
+  'one Solution Option cannot repeat the same mapped Product'
+);
+
+select lives_ok(
+  $$
+    insert into public.product_requirements (
+      id,
+      solution_option_id,
+      position,
+      description,
+      solution_product_id,
+      required_quantity
+    ) values
+      (
+        '4fffffff-0000-0000-0000-000000000002',
+        '70000000-0000-0000-0000-000000000001',
+        97,
+        'First unresolved Product demand',
+        null,
+        null
+      ),
+      (
+        '4fffffff-0000-0000-0000-000000000003',
+        '70000000-0000-0000-0000-000000000001',
+        98,
+        'Second unresolved Product demand',
+        null,
+        null
+      )
+  $$,
+  'one Solution Option may retain multiple unresolved Product needs'
 );
 
 select ok(
