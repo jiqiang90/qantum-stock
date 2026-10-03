@@ -80,20 +80,20 @@ claim to preserve a separately populated hosted database.
       attempt is verified to fail before demo credentials are shared.
 - [x] `Deploy` supports manual dispatch and waits for successful `CI` on a
       `main` push before automatic deployment of the same SHA.
-- [ ] GitHub `production` has the three required Vercel secrets and any desired
+- [x] GitHub `production` has the three required Vercel secrets and any desired
       approval protection.
 - [ ] Vercel native automatic deployment for `main` is disabled before the first
       workflow-bearing push, so a push can reach production only through the
       gated `Deploy` workflow. An explicit CI or deployment rerun remains an
       operator action for the same recorded SHA.
-- [ ] One `main` revision has successful `CI`, successful `Deploy`, and a
+- [x] One `main` revision has successful `CI`, successful `Deploy`, and a
       successful `/` smoke check.
 - [ ] No privileged Supabase credential is exposed to source or runtime.
 - [ ] The public URL supports anonymous review and completes the authenticated
       A2 mutation journey with privately supplied demo credentials.
-- [ ] Repository, CI, deployment, and observed runtime are reported as separate
+- [x] Repository, CI, deployment, and observed runtime are reported as separate
       evidence.
-- [ ] README distinguishes bounded demo authentication from absent production
+- [x] README distinguishes bounded demo authentication from absent production
       identity/authorization, recipient, shortage persistence, and delivery
       proof.
 - [ ] Public responses use proportionate security headers.
@@ -105,10 +105,10 @@ claim to preserve a separately populated hosted database.
 - [x] Add and locally test the CI-gated deployment workflow.
 - [x] Add versioned Vercel configuration that disables native `main`
       auto-deployment.
-- [ ] Configure the GitHub `production` Environment and Vercel secrets.
+- [x] Configure the GitHub `production` Environment and Vercel secrets.
 - [ ] Disable Vercel native automatic deployment for `main` immediately before
       pushing the workflow.
-- [ ] Push the workflow and observe one exact revision through `CI`, `Deploy`,
+- [x] Push the workflow and observe one exact revision through `CI`, `Deploy`,
       Vercel `READY`, and the HTTP smoke check.
 - [ ] Provision the Demo Team Leader, test signup denial, and verify hosted
       anonymous read plus authenticated constrained write.
@@ -130,7 +130,14 @@ Evidence observed on 2026-10-03:
 - after the Vercel Marketplace account was granted project access, Supabase CLI
   link and migration dry-run succeeded; and
 - the user confirmed that the migrations and seed data are visible in hosted
-  Supabase.
+  Supabase;
+- commit `d0db48a` passed GitHub `CI` run `37079806664` and GitHub `Deploy` run
+  `37079887963`;
+- the public production alias is
+  [`https://qantum-stock.vercel.app/`](https://qantum-stock.vercel.app/); and
+- anonymous Work Package list, Work Package detail, and Combined Availability
+  rendering were observed against the public production alias while preparing
+  the repository screenshots.
 
 Local implementation evidence:
 
@@ -141,6 +148,6 @@ Local implementation evidence:
 - the Vercel CLI was rejected as a project dependency after audit findings; the
   REST approach leaves the project dependency audit clean.
 
-No successful GitHub `Deploy` run, Vercel production URL, hosted mutation, or
-manual public-browser journey has been observed yet. Record those independently
-after the workflow is pushed and its Environment secrets are configured.
+The authenticated hosted mutation journey and the complete manual accessibility
+review remain unverified. Automated production-build browser E2E remains
+deferred under PF-006.

@@ -1,47 +1,35 @@
 # Documentation Guide
 
-This directory separates stable product intent and specifications from technical
-design, quality strategy, engineering process, and changing execution records.
+The documentation is split by responsibility so product intent, technical
+decisions, and execution evidence do not compete as different sources of truth.
 
-## Recommended reading order
+## Main review path
 
-1. [`product/overview.md`](product/overview.md) — problem context, evidence gaps,
-   wider workflow, roadmap, and capability status.
-2. [`specs/material-readiness.md`](specs/material-readiness.md) — the accepted
-   First Slice contract, requirements, acceptance criteria, and exclusions.
-3. [`specs/solution-selection.md`](specs/solution-selection.md) — the accepted
-   public-preview/authenticated-write Solution-selection extension and its
-   no-reservation boundary.
-4. [`specs/product-explorer.md`](specs/product-explorer.md) — the approved and
-   demonstrated read-only Product discovery extension and its explicit
-   non-goals.
-5. [`specs/source-backed-solutions.md`](specs/source-backed-solutions.md) — the
-   approved boundary between supplied Solution records and synthetic operational
-   data.
-6. [`architecture/overview.md`](architecture/overview.md) — First Slice module
-   boundaries, read and copy flows, data model, and security invariants.
-7. [`quality/test-strategy.md`](quality/test-strategy.md) — risk-based test
-   coverage and verification expectations.
-8. [`engineering/agent-approach.md`](engineering/agent-approach.md) — how agents
-   are directed, challenged, reviewed, and verified.
+1. [`product/overview.md`](product/overview.md) — business problem, evidence
+   gaps, chosen slice, and roadmap.
+2. [`specs/material-readiness.md`](specs/material-readiness.md) — First Slice
+   requirements, acceptance criteria, assumptions, and exclusions.
+3. [`specs/solution-selection.md`](specs/solution-selection.md) — eligible
+   Solution preview and authenticated selection boundary.
+4. [`architecture/overview.md`](architecture/overview.md) — module boundaries,
+   data flow, data model, security, and trade-offs.
+5. [`quality/test-strategy.md`](quality/test-strategy.md) — risk-based coverage
+   and delivery gates.
+6. [`engineering/agent-approach.md`](engineering/agent-approach.md) — how agents
+   were guided, challenged, reviewed, and verified.
 
-Canonical terminology is defined in [`glossary.md`](glossary.md). Accepted
-architecture decisions are recorded under [`architecture/decisions/`](architecture/decisions/).
-Designed-only future capabilities live under [`specs/future/`](specs/future/)
-and must state their assumptions, validation gaps, and implementation trigger.
+## Supporting references
 
-## Authority boundaries
+- [`glossary.md`](glossary.md) defines canonical domain language.
+- [`specs/product-explorer.md`](specs/product-explorer.md) and
+  [`specs/source-backed-solutions.md`](specs/source-backed-solutions.md) define
+  supporting delivered boundaries.
+- [`architecture/decisions/`](architecture/decisions/) records accepted
+  technical decisions without expanding the main architecture document.
+- [`specs/future/`](specs/future/) contains designed-only capabilities; these
+  are not delivered behaviour.
+- [`../tasks/`](../tasks/) owns work status, implementation checklists, and
+  verification evidence.
 
-| Concern                         | Authoritative location                                          |
-| ------------------------------- | --------------------------------------------------------------- |
-| Business context and roadmap    | `product/overview.md`                                           |
-| First Slice behaviour           | `specs/material-readiness.md` and `specs/solution-selection.md` |
-| Canonical terminology           | `glossary.md`                                                   |
-| Architecture and data flow      | `architecture/overview.md` and its ADRs                         |
-| Test coverage and quality gates | `quality/test-strategy.md`                                      |
-| Agent-development account       | `engineering/agent-approach.md`                                 |
-| Execution status and evidence   | [`../tasks/BOARD.md`](../tasks/BOARD.md) and one active task    |
-
-Stable requirements belong in a specification. Task files link to those
-requirements and record implementation evidence; they do not redefine product
-behaviour.
+Stable behaviour belongs in specifications. Implementation plans and changing
+evidence belong in the corresponding task, not in a parallel planning tree.
