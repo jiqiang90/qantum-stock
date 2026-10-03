@@ -67,10 +67,35 @@ jobs:
           E2E_TEAM_LEADER_PASSWORD="$password" \
           npm run auth:provision-local
 
+          auth_response="$RUNNER_TEMP/auth-verification.json"
+          auth_status="$(curl --silent --show-error \
+            --output "$auth_response" \
+            --write-out "%{http_code}" \
+            --request POST \
+            "$API_URL/auth/v1/token?grant_type=password" \
+            --header "apikey: $PUBLISHABLE_KEY" \
+            --header "Content-Type: application/json" \
+            --data "{\"email\":\"ci-team-leader@example.test\",\"password\":\"$password\"}")"
+          if [[ "$auth_status" != "200" ]]; then
+            node --input-type=module - "$auth_response" <<'NODE'
+          import fs from "node:fs";
+
+          const response = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+          const code = response.error_code ?? response.code ?? response.error ?? "unknown";
+          console.error(`Direct local auth verification failed: ${code}`);
+          NODE
+            exit 1
+          fi
+          unlink "$auth_response"
+
           E2E_TEAM_LEADER_EMAIL="ci-team-leader@example.test" \
           E2E_TEAM_LEADER_PASSWORD="$password" \
           PLAYWRIGHT_WEB_SERVER_COMMAND="npm run start" \
           npm run test:e2e
+
+      - name: Report local auth diagnostics
+        if: failure()
+        run: docker logs --tail 100 supabase_auth_passivefire 2>&1 || true
 
       - name: Upload browser failure evidence
         if: failure()

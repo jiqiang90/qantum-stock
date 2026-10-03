@@ -174,11 +174,13 @@ describe("production deployment workflow", () => {
     expect(run).toContain('password="$(openssl rand -hex 24)"');
     expect(run).toContain("::add-mask::$password");
     expect(run).toContain("npm run auth:provision-local");
+    expect(run).toContain("/auth/v1/token?grant_type=password");
     expect(run).toContain("npm run test:e2e");
     expect(run).not.toContain("$GITHUB_OUTPUT");
     expect(run.indexOf("npm run auth:provision-local")).toBeLessThan(
       run.indexOf("npm run test:e2e"),
     );
+    expect(stepNames).toContain("Report local auth diagnostics");
   });
 
   it("reruns the repository quality gate before a manual deployment", () => {
