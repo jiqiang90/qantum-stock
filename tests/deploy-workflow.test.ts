@@ -180,7 +180,6 @@ describe("production deployment workflow", () => {
     expect(run.indexOf("npm run auth:provision-local")).toBeLessThan(
       run.indexOf("npm run test:e2e"),
     );
-    expect(stepNames).toContain("Report local auth diagnostics");
   });
 
   it("reruns the repository quality gate before a manual deployment", () => {

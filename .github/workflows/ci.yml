@@ -93,10 +93,6 @@ jobs:
           PLAYWRIGHT_WEB_SERVER_COMMAND="npm run start" \
           npm run test:e2e
 
-      - name: Report local auth diagnostics
-        if: failure()
-        run: docker logs --tail 100 supabase_auth_passivefire 2>&1 || true
-
       - name: Upload browser failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
