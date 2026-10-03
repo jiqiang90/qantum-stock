@@ -142,9 +142,9 @@ nodes are future capabilities.
 | Demo sign-in and authenticated write    | First Slice       | Implemented                      |
 | Copyable single and combined summaries  | First Slice       | Implemented                      |
 | Local Supabase demo data                | First Slice       | Implemented                      |
-| Hosted Supabase synthetic data          | First Slice       | Designed only                    |
-| Complete First Slice CI pipeline        | First Slice       | Designed only                    |
-| Public Vercel demonstration             | First Slice       | Designed only                    |
+| Hosted Supabase synthetic data          | First Slice       | Demonstrated with synthetic data |
+| Complete First Slice CI pipeline        | First Slice       | Implemented                      |
+| Public Vercel demonstration             | First Slice       | Implemented                      |
 | Production identity and authorization   | Future            | Production Gap                   |
 | Recipient, assignment, and notification | Future            | Production Gap                   |
 | Resolution and audit history            | Future            | Designed only                    |
@@ -153,6 +153,12 @@ nodes are future capabilities.
 | Alternative-Solution approval           | Future            | Production Gap                   |
 
 Statuses change only when supported by implementation and verification evidence.
+
+The public demonstration is available at
+[qantum-stock.vercel.app](https://qantum-stock.vercel.app/). It reads the
+labelled synthetic dataset from hosted Supabase. GitHub Actions runs the
+complete quality gate before the separate production workflow deploys the
+verified revision to Vercel.
 
 The Aggregate Readiness calculation and report are implemented. The default
 Work Packages page is browse-only; `Check combined availability` explicitly

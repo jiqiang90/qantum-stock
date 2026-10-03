@@ -3,7 +3,7 @@
 ## Status
 
 - **Delivery boundary:** expanded First Slice
-- **Capability status:** Implemented and locally verified; hosted delivery pending
+- **Capability status:** Implemented and verified locally and in the hosted demo
 - **Implementation work item:** `tasks/PF-004B-solution-selection.md`
 
 This specification extends Material Readiness with one bounded write: a Team
