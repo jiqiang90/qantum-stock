@@ -133,12 +133,6 @@ describe("production deployment workflow", () => {
     const exportEnvironment = steps.find(
       ({ name }) => name === "Export local Supabase environment",
     );
-    const provisionActor = steps.find(
-      ({ name }) => name === "Provision local Demo Team Leader",
-    );
-    const generateCredentials = steps.find(
-      ({ name }) => name === "Generate local browser-test credentials",
-    );
     const browserJourneys = steps.find(
       ({ name }) => name === "Run production browser journeys",
     );
@@ -147,8 +141,6 @@ describe("production deployment workflow", () => {
     expect(quality?.env).toBeUndefined();
     expect(stepNames).toContain("Start local Supabase");
     expect(stepNames).toContain("Reset and test database");
-    expect(stepNames).toContain("Generate local browser-test credentials");
-    expect(stepNames).toContain("Provision local Demo Team Leader");
     expect(stepNames).toContain("Install Chromium");
     expect(stepNames).toContain("Run production browser journeys");
     expect(stepNames).toContain("Upload browser failure evidence");
@@ -160,26 +152,32 @@ describe("production deployment workflow", () => {
     expect(exportEnvironment?.run).not.toContain(
       'echo "SUPABASE_SERVICE_ROLE_KEY=',
     );
-    expect(provisionActor?.run).toContain(
+    expect(browserJourneys?.run).toContain(
       'SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"',
     );
-    expect(provisionActor?.env).toEqual({
-      E2E_TEAM_LEADER_EMAIL: "ci-team-leader@example.test",
-      E2E_TEAM_LEADER_PASSWORD: "${{ steps.e2e_credentials.outputs.password }}",
-    });
-    expect(browserJourneys?.env).toEqual({
-      E2E_TEAM_LEADER_EMAIL: "ci-team-leader@example.test",
-      E2E_TEAM_LEADER_PASSWORD: "${{ steps.e2e_credentials.outputs.password }}",
-      PLAYWRIGHT_WEB_SERVER_COMMAND: "npm run start",
-    });
-    expect(generateCredentials).toMatchObject({
-      id: "e2e_credentials",
-      run: expect.stringContaining("openssl rand -hex 24"),
-    });
-    expect(generateCredentials?.run).toContain("::add-mask::");
-    expect(generateCredentials?.run).toContain("$GITHUB_OUTPUT");
+    expect(browserJourneys?.env).toBeUndefined();
     expect(fs.readFileSync(playwrightConfigPath, "utf8")).toContain(
       'screenshot: "only-on-failure"',
+    );
+  });
+
+  it("keeps the ephemeral browser credential within one workflow step", () => {
+    const steps = readCiWorkflow().jobs?.quality?.steps ?? [];
+    const stepNames = steps.map(({ name }) => name);
+    const browserJourneys = steps.find(
+      ({ name }) => name === "Run production browser journeys",
+    );
+    const run = browserJourneys?.run ?? "";
+
+    expect(stepNames).not.toContain("Generate local browser-test credentials");
+    expect(stepNames).not.toContain("Provision local Demo Team Leader");
+    expect(run).toContain('password="$(openssl rand -hex 24)"');
+    expect(run).toContain("::add-mask::$password");
+    expect(run).toContain("npm run auth:provision-local");
+    expect(run).toContain("npm run test:e2e");
+    expect(run).not.toContain("$GITHUB_OUTPUT");
+    expect(run.indexOf("npm run auth:provision-local")).toBeLessThan(
+      run.indexOf("npm run test:e2e"),
     );
   });
 
