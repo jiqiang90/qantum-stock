@@ -133,8 +133,8 @@ them:
   installation conditions.
 - Full raw substrate text remains available on detail but does not compete with
   readiness evidence for page priority.
-- The UI does not add repeated source or synthetic-data warnings; the existing
-  read-only-demo context and documentation carry that boundary.
+- The UI does not add repeated source or synthetic-data warnings; the README
+  and reviewer documentation carry the demonstration boundary.
 
 ## Alternatives and trade-offs
 

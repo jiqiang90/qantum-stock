@@ -193,11 +193,11 @@ and again after persistence.
 
 ## Auth risks and mitigations
 
-| Risk                                                   | Mitigation                                                            |
-| ------------------------------------------------------ | --------------------------------------------------------------------- |
-| Authentication is mistaken for production RBAC         | Label the account Demo Team Leader; keep production roles out         |
-| Signing in removes access to public evidence           | Grant identical SELECT policies to anon and authenticated roles       |
-| Browser supplies a forged identity or cross-site write | Resolve identity server-side and require same-origin mutation         |
-| Session expires between preview and confirmation       | Recheck on every write; preserve selection and prompt sign-in         |
-| Shared demo state drifts between reviewer visits       | Limit writes to reversible eligible options; reset before tests       |
-| Credentials enter repository or public artifacts       | Provision outside Git; use ignored local env and protected CI secrets |
+| Risk                                                   | Mitigation                                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Authentication is mistaken for production RBAC         | Label the account Demo Team Leader; keep production roles out              |
+| Signing in removes access to public evidence           | Grant identical SELECT policies to anon and authenticated roles            |
+| Browser supplies a forged identity or cross-site write | Resolve identity server-side and require same-origin mutation              |
+| Session expires between preview and confirmation       | Recheck on every write; preserve selection and prompt sign-in              |
+| Shared demo state drifts between reviewer visits       | Limit writes to reversible eligible options; reset before tests            |
+| Credentials enter repository or public artifacts       | Provision outside Git; use ignored local env or masked ephemeral CI output |

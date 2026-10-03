@@ -55,16 +55,20 @@ test("a Demo Team Leader can persist an eligible selection and sign out", async 
 }) => {
   const email = process.env.E2E_TEAM_LEADER_EMAIL;
   const password = process.env.E2E_TEAM_LEADER_PASSWORD;
-  test.skip(
-    !email || !password,
-    "Local Demo Team Leader credentials required.",
-  );
+  if (!email || !password) {
+    if (process.env.CI) {
+      throw new Error("CI Demo Team Leader credentials are required.");
+    }
+
+    test.skip(true, "Local Demo Team Leader credentials required.");
+    return;
+  }
 
   await page.goto(
     `/sign-in?next=${encodeURIComponent(authenticatedWorkPackagePath)}`,
   );
-  await page.getByLabel("Email address").fill(email!);
-  await page.getByLabel("Password").fill(password!);
+  await page.getByLabel("Email address").fill(email);
+  await page.getByLabel("Password").fill(password);
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page).toHaveURL(new RegExp(`${authenticatedWorkPackagePath}$`));
   const firstOption = page.getByRole("radio", {
@@ -73,15 +77,31 @@ test("a Demo Team Leader can persist an eligible selection and sign out", async 
   const secondOption = page.getByRole("radio", {
     name: /Ryanfire 0677, READY/,
   });
-  const alternativeOption = (await firstOption.isChecked())
-    ? secondOption
-    : firstOption;
+  const firstOptionWasSelected = await firstOption.isChecked();
+  const originalOption = firstOptionWasSelected ? firstOption : secondOption;
+  const alternativeOption = firstOptionWasSelected ? secondOption : firstOption;
 
-  await alternativeOption.click();
-  await page.getByRole("button", { name: "Use this Solution" }).click();
+  try {
+    await alternativeOption.click();
+    await page.getByRole("button", { name: "Use this Solution" }).click();
 
-  await expect(page).toHaveURL(new RegExp(`${authenticatedWorkPackagePath}$`));
-  await expect(alternativeOption).toBeChecked();
+    await expect(
+      page.getByRole("button", { name: "Current Solution" }),
+    ).toBeDisabled();
+    await expect(alternativeOption).toBeChecked();
+  } finally {
+    if (!page.isClosed()) {
+      await page.goto(authenticatedWorkPackagePath);
+      if (!(await originalOption.isChecked())) {
+        await originalOption.click();
+        await page.getByRole("button", { name: "Use this Solution" }).click();
+        await expect(
+          page.getByRole("button", { name: "Current Solution" }),
+        ).toBeDisabled();
+        await expect(originalOption).toBeChecked();
+      }
+    }
+  }
 
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();

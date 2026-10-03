@@ -1,10 +1,75 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   mapReadinessRow,
   mapSelectionErrorCode,
   type ReadinessRow,
+  SupabaseReadinessRepository,
 } from "./supabase-readiness-repository";
+
+describe("SupabaseReadinessRepository", () => {
+  it("loads and maps Work Package readiness evidence", async () => {
+    const builder = queryBuilder({
+      data: [row([option("option-selected", "0375", [])])],
+      error: null,
+    });
+    const repository = new SupabaseReadinessRepository({
+      from: vi.fn().mockReturnValue(builder),
+      rpc: vi.fn(),
+    } as never);
+
+    await expect(repository.list()).resolves.toMatchObject([
+      { id: "work-package-1", selectedSolutionOptionId: "option-selected" },
+    ]);
+    expect(builder.order).toHaveBeenCalledTimes(3);
+  });
+
+  it("distinguishes an absent Work Package from a failed query", async () => {
+    const absentBuilder = queryBuilder({ data: null, error: null });
+    const absentRepository = new SupabaseReadinessRepository({
+      from: vi.fn().mockReturnValue(absentBuilder),
+      rpc: vi.fn(),
+    } as never);
+    await expect(absentRepository.findById("missing")).resolves.toBeNull();
+
+    const providerError = new Error("database unavailable");
+    const failedBuilder = queryBuilder({ data: null, error: providerError });
+    const failedRepository = new SupabaseReadinessRepository({
+      from: vi.fn().mockReturnValue(failedBuilder),
+      rpc: vi.fn(),
+    } as never);
+    await expect(
+      failedRepository.findById("work-package-1"),
+    ).rejects.toMatchObject({
+      message: "Unable to load material readiness data.",
+      cause: providerError,
+    });
+  });
+
+  it("maps the constrained selection command result", async () => {
+    const rpc = vi
+      .fn()
+      .mockResolvedValueOnce({ data: "option-selected", error: null })
+      .mockResolvedValueOnce({
+        data: null,
+        error: { code: "40001" },
+      });
+    const repository = new SupabaseReadinessRepository({ rpc } as never);
+    const command = {
+      workPackageId: "work-package-1",
+      solutionOptionId: "option-selected",
+      expectedCurrentOptionId: "option-previous",
+    };
+
+    await expect(repository.selectSolution(command)).resolves.toEqual({
+      status: "selected",
+      selectedOptionId: "option-selected",
+    });
+    await expect(repository.selectSolution(command)).resolves.toEqual({
+      status: "conflict",
+    });
+  });
+});
 
 describe("mapReadinessRow", () => {
   it("keeps options distinct and maps their Product evidence", () => {
@@ -160,4 +225,19 @@ function snapshot(id: string, quantity: number, capturedAt: string) {
     available_quantity: quantity,
     captured_at: capturedAt,
   };
+}
+
+function queryBuilder(result: { data: unknown; error: unknown }) {
+  const builder = {
+    eq: vi.fn(),
+    maybeSingle: vi.fn(),
+    order: vi.fn(),
+    overrideTypes: vi.fn().mockResolvedValue(result),
+    select: vi.fn(),
+  };
+  builder.select.mockReturnValue(builder);
+  builder.order.mockReturnValue(builder);
+  builder.eq.mockReturnValue(builder);
+  builder.maybeSingle.mockReturnValue(builder);
+  return builder;
 }

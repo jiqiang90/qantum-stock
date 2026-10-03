@@ -1,3 +1,5 @@
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
+
 import type { AuthActor, AuthGateway } from "./auth-service";
 
 interface SupabaseAuthClient {
@@ -26,14 +28,23 @@ export class SupabaseAuthGateway implements AuthGateway {
     readonly password: string;
   }): Promise<boolean> {
     const { error } = await this.client.auth.signInWithPassword(credentials);
-    return error === null;
+
+    if (error !== null) {
+      throw error;
+    }
+
+    return true;
   }
 
   async currentActor(): Promise<AuthActor | null> {
     const { data, error } = await this.client.auth.getClaims();
     const subject = data?.claims.sub;
 
-    if (error !== null || typeof subject !== "string" || !subject) {
+    if (error !== null && !isAuthSessionMissingError(error)) {
+      throw error;
+    }
+
+    if (typeof subject !== "string" || !subject) {
       return null;
     }
 

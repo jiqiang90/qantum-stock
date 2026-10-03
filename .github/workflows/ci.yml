@@ -16,7 +16,7 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -31,8 +31,65 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Start local Supabase
+        run: npm run db:start
+
+      - name: Export local Supabase environment
+        shell: bash
+        run: |
+          npx supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          source "$RUNNER_TEMP/supabase.env"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY"
+            echo "SUPABASE_URL=$API_URL"
+          } >> "$GITHUB_ENV"
+
+      - name: Reset and test database
+        run: npm run db:reset && npm run db:test && npx supabase db lint --local --level warning
+
+      - name: Generate local browser-test credentials
+        id: e2e_credentials
+        shell: bash
+        run: |
+          password="$(openssl rand -hex 24)"
+          echo "::add-mask::$password"
+          echo "password=$password" >> "$GITHUB_OUTPUT"
+
+      - name: Provision local Demo Team Leader
+        shell: bash
+        run: |
+          source "$RUNNER_TEMP/supabase.env"
+          SUPABASE_URL="$API_URL" \
+          SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY" \
+          npm run auth:provision-local
+        env:
+          E2E_TEAM_LEADER_EMAIL: ci-team-leader@example.test
+          E2E_TEAM_LEADER_PASSWORD: ${{ steps.e2e_credentials.outputs.password }}
+
       - name: Run quality gate
         run: npm run check
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run production browser journeys
+        run: npm run test:e2e
         env:
-          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-build-placeholder
+          E2E_TEAM_LEADER_EMAIL: ci-team-leader@example.test
+          E2E_TEAM_LEADER_PASSWORD: ${{ steps.e2e_credentials.outputs.password }}
+          PLAYWRIGHT_WEB_SERVER_COMMAND: npm run start
+
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-failure-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
+      - name: Stop local Supabase
+        if: always()
+        run: npm run db:stop

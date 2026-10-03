@@ -40,9 +40,10 @@ all other catalogue rows remain outside the slice. Although the brief says the
 catalogue includes required products, the received CSV exposes no Product fields
 or usable Solution-to-Product relationship. Product mappings, Work Packages,
 Product Requirements, quantities, and inventory values therefore remain
-explicit synthetic assumptions. The application header must identify the
-surface as a demonstration; do not repeat `DEMO` in every record identity, add
-another global warning, or add a flag to every row. A Product is a specific
+explicit synthetic assumptions. The README and reviewer documentation identify
+the surface as a demonstration; the application does not need a persistent
+demo badge or warning. Do not repeat `DEMO` in every record identity or add a
+flag to every row. A Product is a specific
 stock-tracked item with its own synthetic Product Code and specific name;
 generic labels such as `Fire Collar` or `Fire Sealant`, and units such as
 `cartridge`, are not Product identities. A matching catalogue field is never

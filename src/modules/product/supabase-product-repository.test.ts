@@ -1,6 +1,42 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { mapProductRow, type ProductRow } from "./supabase-product-repository";
+import {
+  mapProductRow,
+  type ProductRow,
+  SupabaseProductRepository,
+} from "./supabase-product-repository";
+
+describe("SupabaseProductRepository", () => {
+  it("loads and maps the Product list through the database boundary", async () => {
+    const builder = queryBuilder({ data: [productRow()], error: null });
+    const repository = new SupabaseProductRepository({
+      from: vi.fn().mockReturnValue(builder),
+    } as never);
+
+    await expect(repository.list()).resolves.toMatchObject([
+      { id: "product-one", productCode: "SC-100" },
+    ]);
+    expect(builder.order).toHaveBeenCalledTimes(2);
+  });
+
+  it("distinguishes an absent Product from a failed Product query", async () => {
+    const absentBuilder = queryBuilder({ data: null, error: null });
+    const absentRepository = new SupabaseProductRepository({
+      from: vi.fn().mockReturnValue(absentBuilder),
+    } as never);
+    await expect(absentRepository.findById("missing")).resolves.toBeNull();
+
+    const providerError = new Error("database unavailable");
+    const failedBuilder = queryBuilder({ data: null, error: providerError });
+    const failedRepository = new SupabaseProductRepository({
+      from: vi.fn().mockReturnValue(failedBuilder),
+    } as never);
+    await expect(failedRepository.list()).rejects.toMatchObject({
+      message: "Unable to load Product data.",
+      cause: providerError,
+    });
+  });
+});
 
 describe("mapProductRow", () => {
   it("preserves Product-owned catalogue attributes", () => {
@@ -198,3 +234,34 @@ describe("mapProductRow", () => {
     });
   });
 });
+
+function productRow(): ProductRow {
+  return {
+    id: "product-one",
+    product_code: "SC-100",
+    name: "SC-100 Fire Collar",
+    category: "Fire collar",
+    manufacturer: "Northstar Passive Systems",
+    supplier_product_code: "NPS-SC100",
+    variant: "100 mm collar",
+    description: "Rigid collar for combustible pipe penetrations.",
+    canonical_unit: "each",
+    inventory_snapshots: [],
+    solution_products: [],
+  };
+}
+
+function queryBuilder(result: { data: unknown; error: unknown }) {
+  const builder = {
+    eq: vi.fn(),
+    maybeSingle: vi.fn(),
+    order: vi.fn(),
+    overrideTypes: vi.fn().mockResolvedValue(result),
+    select: vi.fn(),
+  };
+  builder.select.mockReturnValue(builder);
+  builder.order.mockReturnValue(builder);
+  builder.eq.mockReturnValue(builder);
+  builder.maybeSingle.mockReturnValue(builder);
+  return builder;
+}

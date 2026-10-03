@@ -16,6 +16,12 @@ export default defineConfig({
     exclude: ["e2e/**", "node_modules/**"],
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/lib/supabase/database.types.ts",
+        "src/test/**",
+      ],
       provider: "v8",
       reporter: ["text", "html"],
       thresholds: {

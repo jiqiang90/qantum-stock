@@ -362,9 +362,9 @@ delivery when the evidence is unavailable.
 - No service-role key is exposed to application or browser runtime.
 - Untrusted route/form data is validated with Zod at its boundary.
 - Domain and summary-building logic are framework-independent and unit-tested.
-- The persistent header identifies the application as a demonstration. Record
-  names do not repeat `DEMO`; a repeated warning banner and per-record synthetic-
-  data field are unnecessary.
+- The README and reviewer documentation identify the application as a
+  demonstration. The UI does not require a persistent demo badge; record names
+  do not repeat `DEMO`, and per-record synthetic-data fields are unnecessary.
 - Errors shown to a public user do not expose database internals or secrets.
 - Persisted required and available quantities are non-negative; the domain
   calculation consumes this validated internal evidence.

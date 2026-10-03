@@ -6,9 +6,10 @@
 
 ## Delivery ruling — 2026-10-03
 
-PF-006 automated production-build E2E is deferred. PF-007 retains the existing
-GitHub `CI` quality workflow and records manual browser verification separately;
-it must not claim automated browser coverage.
+PF-006 now defines automated production-build E2E in GitHub `CI`. PF-007 records
+that CI evidence and manual public-runtime verification separately; configured
+automation must not be described as a successful remote run until GitHub has
+executed it.
 
 Production frontend delivery is controlled by a separate GitHub `Deploy`
 workflow. An automatic deployment starts only after `CI` succeeds for a push to
@@ -149,5 +150,5 @@ Local implementation evidence:
   REST approach leaves the project dependency audit clean.
 
 The authenticated hosted mutation journey and the complete manual accessibility
-review remain unverified. Automated production-build browser E2E remains
-deferred under PF-006.
+review remain unverified. PF-006 owns the automated local-stack browser journey;
+its remote GitHub run remains separate evidence until executed.

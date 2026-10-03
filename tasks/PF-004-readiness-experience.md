@@ -35,9 +35,9 @@ integration boundary; customer-specific runtime plugins are outside this slice.
 
 - [x] AC-1 through AC-7 in `docs/specs/material-readiness.md` are observable
       through the list/detail experience without duplicating domain logic.
-- [x] The list shows all six seeded Work Packages within the persistent
-      read-only-demo context, without repeated `DEMO` identity
-      prefixes.
+- [x] The list shows all six seeded Work Packages without repeated `DEMO`
+      identity prefixes; README and reviewer documentation carry the read-only
+      demo context.
 - [x] The nominated source-backed Solution is presented as catalogue context,
       not compliance or Product-mapping approval.
 - [x] Known Product evidence shows a specific Product name and Product Code;

@@ -153,18 +153,22 @@ the browser journey.
 Before a work item is marked done, run its focused tests plus:
 
 ```bash
-npm run format:check
-npm run lint
-npm run typecheck
+npm run check
 ```
 
-Before delivery, run the complete local verification command containing:
+`npm run check` formats-checks, lints, type-checks, measures all authored
+production source against the configured coverage thresholds, and builds the
+production application. Before delivery, also run:
 
-- clean database reset and database tests;
-- unit, application, adapter, and presentation tests;
-- production build;
-- the selected Playwright journey;
-- authored-file line-limit and documentation-link checks if configured.
+- `npm run db:reset && npm run db:test` against local Supabase;
+- `npm run auth:provision-local` with local-only test credentials; and
+- `PLAYWRIGHT_WEB_SERVER_COMMAND="npm run start" npm run test:e2e` after the
+  production build.
+
+GitHub `CI` owns that lifecycle from a clean runner, including database linting,
+Chromium installation, failure-only screenshot/trace upload, and Supabase
+cleanup. Missing authenticated-journey credentials fail CI instead of silently
+skipping the journey.
 
 CI execution, deployment, and public-runtime verification are separate claims.
 

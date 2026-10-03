@@ -125,8 +125,9 @@ preview experience.
 - Local and hosted reads continue to use the documented public Supabase URL and
   publishable key; no service-role key is added to application runtime.
 - Local/CI browser authentication uses `E2E_TEAM_LEADER_EMAIL` and
-  `E2E_TEAM_LEADER_PASSWORD` from an ignored local environment file or protected
-  CI secrets. These values are setup inputs, never application defaults.
+  `E2E_TEAM_LEADER_PASSWORD` from an ignored local environment file or a masked,
+  ephemeral CI step output. These values are setup inputs, never application
+  defaults.
 - Hosted reviewer credentials are created directly in Supabase Auth and shared
   privately. The public repository and deployed client contain no password.
 - Local execution remains `npm run db:start`, `npm run db:reset`, and

@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import { isAuthSessionMissingError } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+
+import { reportAuthFailure } from "@/lib/auth-failure";
 
 import type { Database } from "./database.types";
 import { parseSupabaseReadConfig } from "./read-config";
@@ -30,7 +33,11 @@ export async function updateSupabaseSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getClaims();
+  const { error } = await supabase.auth.getClaims();
+
+  if (error !== null && !isAuthSessionMissingError(error)) {
+    reportAuthFailure("refresh-session");
+  }
 
   return response;
 }

@@ -135,16 +135,29 @@ npm run db:stop
 ## Verify the project
 
 ```bash
-npm run check   # format, lint, typecheck, unit tests, production build
+npm run check   # format, lint, typecheck, full-source coverage, production build
+npm run db:reset
 npm run db:test # RLS, command permissions, schema and seed behaviour
-npm run test:e2e
+npm run auth:provision-local
+PLAYWRIGHT_WEB_SERVER_COMMAND="npm run start" npm run test:e2e
 ```
 
-GitHub `CI` runs `npm run check`. After CI succeeds on `main`, the separate
-`Deploy` workflow deploys that exact revision to Vercel; it can also be started
-manually. Automated production-build browser E2E remains documented future
-work, so the repository does not present the deployment smoke check as full
-browser coverage.
+The authenticated browser journey also needs the local-only `SUPABASE_URL`,
+`SUPABASE_SERVICE_ROLE_KEY`, `E2E_TEAM_LEADER_EMAIL`, and
+`E2E_TEAM_LEADER_PASSWORD` entries in `.env.local`. Run
+`npm run auth:provision-local` after a database reset. Missing credentials skip
+that journey locally and fail CI; the provisioning command rejects non-local
+Supabase hosts.
+
+When port 3000 is already in use, set `PLAYWRIGHT_BASE_URL` to a free local
+origin and pass the matching port to `PLAYWRIGHT_WEB_SERVER_COMMAND`. An
+explicit production-server command never reuses an existing development server.
+
+GitHub `CI` starts a clean local Supabase stack, resets and tests the database,
+runs `npm run check`, and then executes Playwright against the production build.
+After CI succeeds on `main`, the separate `Deploy` workflow deploys that exact
+revision to Vercel; it can also be started manually. CI, deployment, and public
+runtime verification remain separate evidence.
 
 ## Documentation
 

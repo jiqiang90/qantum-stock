@@ -1,3 +1,5 @@
+import type { AuthFailureReporter } from "@/lib/auth-failure";
+
 import { parseSignInInput } from "./auth-boundaries";
 
 export interface AuthGateway {
@@ -13,6 +15,8 @@ export interface AuthActor {
   readonly id: string;
 }
 
+const ignoreAuthFailure: AuthFailureReporter = () => {};
+
 export type SignInResult =
   | {
       readonly status: "invalid";
@@ -24,7 +28,10 @@ export type SignInResult =
   | { readonly status: "error"; readonly message: string };
 
 export class AuthService {
-  constructor(private readonly gateway: AuthGateway) {}
+  constructor(
+    private readonly gateway: AuthGateway,
+    private readonly reportFailure: AuthFailureReporter = ignoreAuthFailure,
+  ) {}
 
   async signIn(input: unknown): Promise<SignInResult> {
     const parsed = parseSignInInput(input);
@@ -43,6 +50,7 @@ export class AuthService {
         return { status: "success", nextPath: parsed.data.nextPath };
       }
     } catch {
+      this.reportFailure("sign-in");
       // The public result intentionally hides provider and account details.
     }
 
@@ -60,6 +68,7 @@ export class AuthService {
     try {
       return await this.gateway.currentActor();
     } catch {
+      this.reportFailure("current-actor");
       return null;
     }
   }

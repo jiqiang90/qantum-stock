@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+const applicationOrigin =
+  process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+
 test.use({
   launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH
     ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH }
@@ -11,7 +14,7 @@ test("two individually ready Work Packages expose shared inventory contention", 
   page,
 }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"], {
-    origin: "http://127.0.0.1:3000",
+    origin: applicationOrigin,
   });
   await page.goto("/");
 

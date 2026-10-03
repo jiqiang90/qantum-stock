@@ -86,9 +86,9 @@ tenancy, or production RBAC.
   rather than introducing a speculative Scenario entity.
 - Row-level synthetic-data flags are omitted because provenance is clear at the
   table boundary: selected Solution fields are source-backed; Work Packages,
-  Products, mappings, quantities, and inventory are synthetic. The persistent
-  read-only-demo header communicates the overall environment without repeated
-  warning text or identity prefixes.
+  Products, mappings, quantities, and inventory are synthetic. The README and
+  reviewer documentation communicate the overall demo boundary; the UI does
+  not require repeated warning text or identity prefixes.
 - A generic `source_reference` is omitted because Solution already preserves its
   Supplier, Internal Code, and Supplier Ref. Code explicitly.
 

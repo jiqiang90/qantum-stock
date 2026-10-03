@@ -352,11 +352,11 @@ three-decimal scale.
 
 There is no row-level synthetic-data flag. Solution fields come from the bounded
 source-backed subset, while Work Packages, Products, mappings, quantities, and
-Inventory Snapshots are synthetic by table and documented as such. The
-persistent demonstration header communicates the overall environment without
-repeated warning text or identity prefixes. A generic `source_reference` field
-would duplicate the explicit Internal Code, Supplier Ref. Code, and Supplier
-fields, so it is not introduced.
+Inventory Snapshots are synthetic by table and documented as such. The README
+and reviewer documentation communicate the overall demonstration environment;
+the UI does not repeat warning text or identity prefixes. A generic
+`source_reference` field would duplicate the explicit Internal Code, Supplier
+Ref. Code, and Supplier fields, so it is not introduced.
 
 ## Public demo security boundary
 

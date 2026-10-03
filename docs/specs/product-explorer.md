@@ -250,9 +250,10 @@ catalogue.
       (validated).
 - [x] The public role already has read-only access to the required tables and no
       runtime write permission (validated).
-- [x] The persistent header identifies the application as a read-only demo;
-      synthetic record names remain concise and do not repeat `DEMO` as an
-      identity prefix (validated).
+- [x] The README and reviewer documentation identify the application as a
+      read-only demo; the UI does not require a persistent demo badge, and
+      synthetic record names remain concise without a `DEMO` identity prefix
+      (validated).
 - [x] The term "management" means read-only exploration for this task; the user
       approved the written boundary on 2026-10-02.
 - The 4–6 hour take-home target remains a constraint. This optional capability

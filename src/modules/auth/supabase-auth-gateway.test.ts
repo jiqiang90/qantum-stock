@@ -1,3 +1,4 @@
+import { AuthSessionMissingError } from "@supabase/supabase-js";
 import { describe, expect, it, vi } from "vitest";
 
 import { SupabaseAuthGateway } from "./supabase-auth-gateway";
@@ -17,6 +18,22 @@ describe("SupabaseAuthGateway", () => {
       email: "leader@example.com",
       password: "secret",
     });
+  });
+
+  it("surfaces a returned password-authentication error to the service", async () => {
+    const providerError = new Error("provider unavailable");
+    const gateway = new SupabaseAuthGateway(
+      fakeClient({
+        signInWithPassword: vi.fn().mockResolvedValue({ error: providerError }),
+      }),
+    );
+
+    await expect(
+      gateway.signInWithPassword({
+        email: "leader@example.com",
+        password: "secret",
+      }),
+    ).rejects.toBe(providerError);
   });
 
   it("returns only a verified actor from JWT claims", async () => {
@@ -47,6 +64,32 @@ describe("SupabaseAuthGateway", () => {
     );
 
     await expect(gateway.currentActor()).resolves.toBeNull();
+  });
+
+  it("treats an absent session as anonymous", async () => {
+    const gateway = new SupabaseAuthGateway(
+      fakeClient({
+        getClaims: vi.fn().mockResolvedValue({
+          data: null,
+          error: new AuthSessionMissingError(),
+        }),
+      }),
+    );
+
+    await expect(gateway.currentActor()).resolves.toBeNull();
+  });
+
+  it("surfaces a returned claims error to the service", async () => {
+    const providerError = new Error("claims unavailable");
+    const gateway = new SupabaseAuthGateway(
+      fakeClient({
+        getClaims: vi
+          .fn()
+          .mockResolvedValue({ data: null, error: providerError }),
+      }),
+    );
+
+    await expect(gateway.currentActor()).rejects.toBe(providerError);
   });
 });
 

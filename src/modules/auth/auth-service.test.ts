@@ -57,6 +57,40 @@ describe("AuthService", () => {
     });
   });
 
+  it("reports a provider exception without changing the public sign-in result", async () => {
+    const providerError = new Error("provider detail must stay private");
+    const gateway = new FakeAuthGateway(true);
+    gateway.signInError = providerError;
+    const reportedOperations: string[] = [];
+    const service = new AuthService(gateway, (operation) => {
+      reportedOperations.push(operation);
+    });
+
+    await expect(
+      service.signIn({
+        email: "team.leader@example.com",
+        password: "demo-password",
+        nextPath: "/",
+      }),
+    ).resolves.toEqual({
+      status: "error",
+      message: "We couldn't sign you in. Check the details and try again.",
+    });
+    expect(reportedOperations).toEqual(["sign-in"]);
+  });
+
+  it("reports a current-session exception and fails closed to anonymous", async () => {
+    const gateway = new FakeAuthGateway(true);
+    gateway.currentActorError = new Error("provider unavailable");
+    const reportedOperations: string[] = [];
+    const service = new AuthService(gateway, (operation) => {
+      reportedOperations.push(operation);
+    });
+
+    await expect(service.currentActor()).resolves.toBeNull();
+    expect(reportedOperations).toEqual(["current-actor"]);
+  });
+
   it("exposes the verified current actor and delegates sign out", async () => {
     const gateway = new FakeAuthGateway(true);
     gateway.actor = { id: "user-1" };
@@ -72,6 +106,8 @@ describe("AuthService", () => {
 class FakeAuthGateway implements AuthGateway {
   readonly signInCalls: { email: string; password: string }[] = [];
   actor: { id: string } | null = null;
+  currentActorError: Error | null = null;
+  signInError: Error | null = null;
   signOutCalls = 0;
 
   constructor(private readonly succeeds: boolean) {}
@@ -80,11 +116,19 @@ class FakeAuthGateway implements AuthGateway {
     readonly email: string;
     readonly password: string;
   }): Promise<boolean> {
+    if (this.signInError !== null) {
+      throw this.signInError;
+    }
+
     this.signInCalls.push(credentials);
     return this.succeeds;
   }
 
   async currentActor(): Promise<{ id: string } | null> {
+    if (this.currentActorError !== null) {
+      throw this.currentActorError;
+    }
+
     return this.actor;
   }
 
