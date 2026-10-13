@@ -43,39 +43,39 @@ export type Database = {
           description: string;
           id: string;
           position: number;
+          product_id: string | null;
           required_quantity: number | null;
           solution_option_id: string;
-          solution_product_id: string | null;
         };
         Insert: {
           description: string;
           id: string;
           position: number;
+          product_id?: string | null;
           required_quantity?: number | null;
           solution_option_id: string;
-          solution_product_id?: string | null;
         };
         Update: {
           description?: string;
           id?: string;
           position?: number;
+          product_id?: string | null;
           required_quantity?: number | null;
           solution_option_id?: string;
-          solution_product_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "product_requirements_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "product_requirements_solution_option_id_fkey";
             columns: ["solution_option_id"];
             isOneToOne: false;
             referencedRelation: "solution_options";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "product_requirements_solution_product_id_fkey";
-            columns: ["solution_product_id"];
-            isOneToOne: false;
-            referencedRelation: "solution_products";
             referencedColumns: ["id"];
           },
         ];
@@ -145,39 +145,6 @@ export type Database = {
             columns: ["work_package_id"];
             isOneToOne: false;
             referencedRelation: "work_packages";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      solution_products: {
-        Row: {
-          id: string;
-          product_id: string;
-          solution_id: string;
-        };
-        Insert: {
-          id: string;
-          product_id: string;
-          solution_id: string;
-        };
-        Update: {
-          id?: string;
-          product_id?: string;
-          solution_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "solution_products_product_id_fkey";
-            columns: ["product_id"];
-            isOneToOne: false;
-            referencedRelation: "products";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "solution_products_solution_id_fkey";
-            columns: ["solution_id"];
-            isOneToOne: false;
-            referencedRelation: "solutions";
             referencedColumns: ["id"];
           },
         ];

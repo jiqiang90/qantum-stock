@@ -38,17 +38,15 @@ const WORK_PACKAGE_SELECT = `
       position,
       description,
       required_quantity,
-      solution_product:solution_products (
-        product:products (
+      product:products!product_requirements_product_id_fkey (
+        id,
+        product_code,
+        name,
+        canonical_unit,
+        inventory_snapshots (
           id,
-          product_code,
-          name,
-          canonical_unit,
-          inventory_snapshots (
-            id,
-            available_quantity,
-            captured_at
-          )
+          available_quantity,
+          captured_at
         )
       )
     )
@@ -74,9 +72,7 @@ interface ProductRequirementRow {
   readonly position: number;
   readonly description: string;
   readonly required_quantity: number | null;
-  readonly solution_product: {
-    readonly product: ProductRow;
-  } | null;
+  readonly product: ProductRow | null;
 }
 
 interface SolutionRow {
@@ -232,7 +228,7 @@ function mapSolution(row: SolutionRow): SolutionReference {
 function mapRequirement(
   requirement: ProductRequirementRow,
 ): RequirementEvidenceInput {
-  const product = requirement.solution_product?.product ?? null;
+  const product = requirement.product;
   const latestSnapshot = selectLatestSnapshot(
     product?.inventory_snapshots ?? [],
   );

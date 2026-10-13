@@ -5,10 +5,10 @@ select plan(56);
 select has_table('public', 'solutions', 'solutions table exists');
 select has_table('public', 'work_packages', 'work_packages table exists');
 select has_table('public', 'products', 'products table exists');
-select has_table(
+select hasnt_table(
   'public',
   'solution_products',
-  'solution_products association table exists'
+  'Product Requirements reference Products without an association table'
 );
 select has_table(
   'public',
@@ -200,35 +200,41 @@ select col_not_null(
   'description',
   'Product description is required'
 );
-select col_not_null(
-  'public',
-  'solution_products',
-  'solution_id',
-  'a Solution mapping requires a Solution'
-);
-select col_not_null(
-  'public',
-  'solution_products',
-  'product_id',
-  'a Solution mapping requires a Product'
-);
 select has_column(
   'public',
   'product_requirements',
-  'solution_product_id',
-  'Product Requirements can reference a Solution-Product association'
+  'product_id',
+  'Product Requirements can reference a Product directly'
 );
 select col_is_null(
   'public',
   'product_requirements',
-  'solution_product_id',
-  'an unresolved Product mapping remains nullable'
+  'product_id',
+  'an unresolved Product reference remains nullable'
 );
 select hasnt_column(
   'public',
   'product_requirements',
+  'solution_product_id',
+  'Product Requirements no longer use a Solution-Product association'
+);
+select col_type_is(
+  'public',
+  'product_requirements',
   'product_id',
-  'Product Requirements do not bypass the nominated Solution mapping'
+  'uuid',
+  'Product Requirements use Product UUIDs directly'
+);
+select ok(
+  exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.product_requirements'::regclass
+      and confrelid = 'public.products'::regclass
+      and contype = 'f'
+      and conname = 'product_requirements_product_id_fkey'
+  ),
+  'Product Requirements enforce the direct Product reference'
 );
 select col_is_null(
   'public',
@@ -292,90 +298,77 @@ select ok(
     select 1
     from pg_indexes
     where schemaname = 'public'
-      and tablename = 'solution_products'
+      and tablename = 'product_requirements'
       and indexdef like '%(product_id)%'
   ),
-  'Product Explorer can traverse Solution mappings by Product'
+  'Product Explorer can traverse Requirements by Product'
 );
 select ok(
   exists (
     select 1
-    from pg_indexes
-    where schemaname = 'public'
-      and tablename = 'product_requirements'
-      and indexdef like '%(solution_product_id)%'
+    from pg_constraint
+    where conrelid = 'public.product_requirements'::regclass
+      and contype = 'u'
+      and pg_get_constraintdef(oid) = 'UNIQUE (solution_option_id, product_id)'
   ),
-  'Product Explorer can traverse Requirements by Solution mapping'
+  'one Solution Option cannot repeat the same resolved Product'
 );
 
-select throws_ok(
-  $$
-    insert into public.product_requirements (
-      id,
-      solution_option_id,
-      position,
-      description,
-      solution_product_id,
-      required_quantity
-    ) values (
-      '40000000-0000-0000-0000-000000000097',
-      '70000000-0000-0000-0000-000000000001',
-      97,
-      'Reject a Product mapping from another Solution',
-      '60000000-0000-0000-0000-000000000004',
-      1
-    )
-  $$,
-  '23514',
-  'Product Requirement mapping must belong to the Solution Option',
-  'a Product Requirement cannot use a mapping from another option Solution'
+select is(
+  (
+    select count(*)
+    from pg_proc
+    where pronamespace = 'public'::regnamespace
+      and proname in (
+        'enforce_option_requirement_solution_match',
+        'enforce_solution_option_requirement_match',
+        'enforce_solution_product_option_match'
+      )
+  ),
+  0::bigint,
+  'obsolete Solution-Product consistency functions are removed'
 );
-select throws_ok(
+select is(
+  (
+    select count(*)
+    from pg_trigger
+    where tgrelid in (
+        'public.product_requirements'::regclass,
+        'public.solution_options'::regclass
+      )
+      and tgname in (
+        'option_requirements_solution_match',
+        'solution_options_requirement_match',
+        'solution_products_option_match'
+      )
+  ),
+  0::bigint,
+  'obsolete Solution-Product consistency triggers are removed'
+);
+select lives_ok(
   $$
     update public.solution_options
     set solution_id = '10000000-0000-0000-0000-000000000002'
     where id = '70000000-0000-0000-0000-000000000001'
   $$,
-  '23514',
-  'Solution Option must match all mapped Product Requirements',
-  'a Solution Option cannot change to a Solution that conflicts with its Requirements'
-);
-select throws_ok(
-  $$
-    update public.solution_products
-    set solution_id = '10000000-0000-0000-0000-000000000002'
-    where id = '60000000-0000-0000-0000-000000000001'
-  $$,
-  '23514',
-  'Solution Product mapping must match all linked Solution Options',
-  'a Solution Product cannot move while option Requirements use another Solution'
+  'a Solution Option can change Solution without rewriting Product Requirements'
 );
 
 select lives_ok(
   $$
-    insert into public.solution_products (
-      id,
-      solution_id,
-      product_id
-    ) values (
-      '6fffffff-0000-0000-0000-000000000099',
-      '10000000-0000-0000-0000-000000000001',
-      '30000000-0000-0000-0000-000000000005'
-    );
-
     insert into public.product_requirements (
       id,
       solution_option_id,
       position,
       description,
-      solution_product_id,
+      product_id,
       required_quantity
     ) values (
       '40000000-0000-0000-0000-000000000099',
       '70000000-0000-0000-0000-000000000001',
       99,
       'Verify zero required quantity remains known',
-      '6fffffff-0000-0000-0000-000000000099',
+      '30000000-0000-0000-0000-000000000005',
       0
     )
   $$,
@@ -388,7 +381,7 @@ select throws_ok(
       solution_option_id,
       position,
       description,
-      solution_product_id,
+      product_id,
       required_quantity
     ) values (
       '40000000-0000-0000-0000-000000000098',

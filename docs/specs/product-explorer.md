@@ -15,8 +15,8 @@
 Add a public, read-only Product Explorer so a Team Leader can inspect a specific
 Product and see which Work Packages reference it. The explorer makes the
 existing Product model and reverse usage relationship visible without creating
-a Product administration system or presenting the synthetic SolutionProduct
-association as an approved bill of materials, site, warehouse, reservation, or
+a Product administration system or presenting the synthetic Product Requirement
+references as an approved bill of materials, site, warehouse, reservation, or
 compliance decision.
 
 This is a supporting demonstration capability, not part of the accepted A2
@@ -50,7 +50,7 @@ materials, stock reservation, or compliance approval.
 - Latest Inventory Snapshot evidence selected deterministically by
   `captured_at DESC, id DESC`.
 - Reverse usage through
-  `Product -> SolutionProduct -> Product Requirement -> Solution Option -> Work Package`,
+  `Product -> Product Requirement -> Solution Option -> Work Package`,
   showing Work Package name, planned date, requirement description, and
   required quantity for current selected options only.
 - Informational required quantity across the usage rows. Known quantities are
@@ -93,10 +93,9 @@ The delivered relationship is:
 
 ```text
 Product
-  <- SolutionProduct
-      <- Product Requirement
-          <- selected Solution Option
-              <- Work Package
+  <- Product Requirement
+      <- selected Solution Option
+          <- Work Package
 ```
 
 The secondary section is labelled **Work Package usage (n)**. Its table is
@@ -172,10 +171,10 @@ Each usage row shows the Work Package name as a link whose hit area covers the
 visual row, planned date, requirement description, and required quantity in the
 Product's canonical unit. Product-level available and total required quantities
 are not repeated per row. The view does not calculate remaining stock or expose
-SolutionProduct as navigation or infer compliance approval. The tab label is
-the only visible usage count and counts unique Work Packages, not requirement
-rows; duplicate section headings are omitted. A concise visible note states that
-the summary does not reserve stock or assume concurrent work.
+the direct Product reference as approval evidence or infer compliance approval.
+The tab label is the only visible usage count and counts unique Work Packages,
+not requirement rows; duplicate section headings are omitted. A concise visible
+note states that the summary does not reserve stock or assume concurrent work.
 
 ### Work Package detail
 

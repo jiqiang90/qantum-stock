@@ -93,7 +93,7 @@ sequenceDiagram
     TL->>Page: Open Work Package
     Page->>Service: findById(id)
     Service->>Repo: findById(id)
-    Repo->>DB: Read package, Solution mappings, requirements, products, snapshots
+    Repo->>DB: Read package, options, requirements, products, snapshots
     DB-->>Repo: Synthetic rows
     Repo-->>Service: Domain input
     Service->>Rules: assessReadiness(requirements)
@@ -202,7 +202,7 @@ sequenceDiagram
     Page->>Page: Validate URL input with Zod
     Page->>Service: list(filters) or findById(id)
     Service->>Repo: Read Product evidence
-    Repo->>DB: Select Products, Solution mappings, requirements, Work Packages
+    Repo->>DB: Select Products, requirements, Solution Options, Work Packages
     DB-->>Repo: Public synthetic rows
     Repo-->>Service: Ordered Product evidence
     Service-->>Page: Filtered list or detail
@@ -210,10 +210,10 @@ sequenceDiagram
 ```
 
 The Product query follows
-`Product <- SolutionProduct <- Product Requirement <- Solution Option <- Work Package`
+`Product <- Product Requirement <- Solution Option <- Work Package`
 and includes only the Work Package's selected option.
-It uses the mapping only to recover Work Package usage and makes no approval or
-compliance claim. The list count deduplicates Work Packages, while detail
+The direct requirement reference recovers Work Package usage and makes no
+approval or compliance claim. The list count deduplicates Work Packages, while detail
 preserves every Product Requirement. Search and evidence filters are validated
 GET parameters; malformed or multi-valued input falls back safely.
 
@@ -256,10 +256,8 @@ was sent, reported, escalated, received, or resolved.
 erDiagram
     WORK_PACKAGE ||--|{ SOLUTION_OPTION : permits
     SOLUTION ||--o{ SOLUTION_OPTION : offered_as
-    SOLUTION ||--o{ SOLUTION_PRODUCT : defines
-    PRODUCT ||--o{ SOLUTION_PRODUCT : identifies
     SOLUTION_OPTION ||--o{ PRODUCT_REQUIREMENT : contains
-    SOLUTION_PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_source
+    PRODUCT o|--o{ PRODUCT_REQUIREMENT : may_identify
     PRODUCT ||--o{ INVENTORY_SNAPSHOT : has
 
     SOLUTION {
@@ -299,16 +297,11 @@ erDiagram
         text description
         text canonical_unit
     }
-    SOLUTION_PRODUCT {
-        uuid id PK
-        uuid solution_id FK
-        uuid product_id FK
-    }
     PRODUCT_REQUIREMENT {
         uuid id PK
         uuid solution_option_id FK
         integer position
-        uuid solution_product_id FK "nullable"
+        uuid product_id FK "nullable"
         text description
         numeric required_quantity "nullable, scale 3"
     }
@@ -322,25 +315,23 @@ erDiagram
 
 The diagram represents the implemented option-owned requirement model. A
 composite database constraint ensures the selected Solution Option belongs to
-the same Work Package, while mapping triggers ensure every resolved requirement
-uses a Product declared for that option's Solution. Each Product represents a concrete
-stock-tracked item with a unique synthetic `product_code`, specific name, flat
+the same Work Package. Each resolved Product Requirement references its Product
+directly. Each Product represents a concrete stock-tracked item with a unique
+synthetic `product_code`, specific name, flat
 category, manufacturer, supplier-facing code, variant, and description; generic
 material descriptions and units are not Product identities. These profile
 fields are synthetic Product data. The Solution table preserves twelve selected
 catalogue fields exactly and derives display labels rather than persisting an
 invented name. `supplier + internal_code` is the source identity; the UUID
-remains the relational key. `SolutionProduct` is an internal association
-recording the Product set assumed for the operationally used Solutions without
-storing quantities. Quantities remain option-specific Product Requirements. Supplied
-Solution `Internal Code` and `Supplier Ref. Code` values are never reused as
-Product identifiers. `ProductRequirement.solution_product_id` is nullable so
-the demo can explain an unresolved mapping, and `required_quantity` is nullable
-so it can explain missing demand evidence. Database triggers enforce that each
-resolved requirement uses an association belonging to its option's Solution,
-including when either side is updated. Negative pgTAP
-tests protect the mapping paths. An unmapped requirement cannot store a
-quantity, because no Product-owned canonical unit is available to interpret it.
+remains the relational key. Product identity and quantity remain on the
+option-specific Product Requirement. Supplied Solution `Internal Code` and
+`Supplier Ref. Code` values are never reused as
+Product identifiers. `ProductRequirement.product_id` is nullable so
+the demo can explain an unresolved Product, and `required_quantity` is nullable
+so it can explain missing demand evidence. The Product foreign key protects
+resolved requirements, and database tests protect both relationship paths. An
+unresolved requirement cannot store a quantity because no Product-owned
+canonical unit is available to interpret it.
 Requirement and inventory rows do not repeat units; both
 quantities use the Product's canonical unit. A Solution Option may contain only
 one mapped requirement for a given Product; multiple unresolved requirements
@@ -351,8 +342,8 @@ normalizes to the same
 three-decimal scale.
 
 There is no row-level synthetic-data flag. Solution fields come from the bounded
-source-backed subset, while Work Packages, Products, mappings, quantities, and
-Inventory Snapshots are synthetic by table and documented as such. The README
+source-backed subset, while Work Packages, Products, Product Requirements,
+quantities, and Inventory Snapshots are synthetic by table and documented as such. The README
 and reviewer documentation communicate the overall demonstration environment;
 the UI does not repeat warning text or identity prefixes. A generic
 `source_reference` field would duplicate the explicit Internal Code, Supplier
