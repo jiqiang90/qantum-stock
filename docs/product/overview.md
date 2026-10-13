@@ -31,9 +31,9 @@ and the shortage handoff; reservation remains a later capability.
 - The candidate must choose a useful First Slice, introduce clearly labelled
   synthetic data where
   required, and make assumptions and Production Gaps explicit.
-- Product profile fields and SolutionProduct associations shown by the
-  supporting Product Explorer are synthetic demonstration data. They make the
-  slice executable but do not imply catalogue or compliance approval.
+- Product profile fields and the Product references on Product Requirements
+  shown by the supporting Product Explorer are synthetic demonstration data.
+  They make the slice executable but do not imply catalogue or compliance approval.
 - Twelve selected Solution rows preserve the supplied catalogue fields. Nine
   support the current selected-or-alternative Work Package journey and three
   remain catalogue coverage only; none provides an authoritative Product

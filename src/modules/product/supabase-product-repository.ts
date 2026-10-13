@@ -19,20 +19,18 @@ const PRODUCT_SELECT = `
     available_quantity,
     captured_at
   ),
-  solution_products:solution_products!solution_products_product_id_fkey (
-    requirements:product_requirements!product_requirements_solution_product_id_fkey (
+  requirements:product_requirements!product_requirements_product_id_fkey (
+    id,
+    position,
+    description,
+    required_quantity,
+    solution_option:solution_options!product_requirements_solution_option_id_fkey (
       id,
-      position,
-      description,
-      required_quantity,
-      solution_option:solution_options!product_requirements_solution_option_id_fkey (
+      work_package:work_packages!solution_options_work_package_id_fkey (
         id,
-        work_package:work_packages!solution_options_work_package_id_fkey (
-          id,
-          name,
-          planned_date,
-          selected_solution_option_id
-        )
+        name,
+        planned_date,
+        selected_solution_option_id
       )
     )
   )
@@ -71,9 +69,7 @@ export interface ProductRow {
   readonly description: string;
   readonly canonical_unit: string;
   readonly inventory_snapshots: readonly InventorySnapshotRow[];
-  readonly solution_products: readonly {
-    readonly requirements: readonly ProductUsageRow[];
-  }[];
+  readonly requirements: readonly ProductUsageRow[];
 }
 
 export class SupabaseProductRepository implements ProductRepository {
@@ -112,12 +108,10 @@ export class SupabaseProductRepository implements ProductRepository {
 
 export function mapProductRow(row: ProductRow): ProductEvidence {
   const latestSnapshot = selectLatestSnapshot(row.inventory_snapshots);
-  const usages = row.solution_products.flatMap(({ requirements }) =>
-    requirements.filter(
-      ({ solution_option }) =>
-        solution_option.id ===
-        solution_option.work_package.selected_solution_option_id,
-    ),
+  const usages = row.requirements.filter(
+    ({ solution_option }) =>
+      solution_option.id ===
+      solution_option.work_package.selected_solution_option_id,
   );
 
   return {

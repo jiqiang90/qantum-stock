@@ -57,7 +57,7 @@ describe("mapProductRow", () => {
       supplier_product_code: "NPS-SC100",
       variant: "100 mm collar",
       inventory_snapshots: [],
-      solution_products: [],
+      requirements: [],
     };
 
     expect(mapProductRow(row)).toMatchObject({
@@ -97,7 +97,7 @@ describe("mapProductRow", () => {
           captured_at: "2026-10-01T00:00:00Z",
         },
       ],
-      solution_products: [],
+      requirements: [],
     });
 
     expect(result).toEqual({
@@ -130,89 +130,81 @@ describe("mapProductRow", () => {
       description: "Sealant for joints and annular gaps.",
       canonical_unit: "cartridge",
       inventory_snapshots: [],
-      solution_products: [
+      requirements: [
         {
-          requirements: [
-            {
-              id: "requirement-z",
-              position: 2,
-              description: "Later position",
-              required_quantity: null,
-              solution_option: {
-                id: "option-a",
-                work_package: {
-                  id: "work-package-a",
-                  name: "Alpha works",
-                  planned_date: "2026-10-08",
-                  selected_solution_option_id: "option-a",
-                },
-              },
+          id: "requirement-z",
+          position: 2,
+          description: "Later position",
+          required_quantity: null,
+          solution_option: {
+            id: "option-a",
+            work_package: {
+              id: "work-package-a",
+              name: "Alpha works",
+              planned_date: "2026-10-08",
+              selected_solution_option_id: "option-a",
             },
-            {
-              id: "requirement-b",
-              position: 1,
-              description: "Same position, later ID",
-              required_quantity: 3,
-              solution_option: {
-                id: "option-a",
-                work_package: {
-                  id: "work-package-a",
-                  name: "Alpha works",
-                  planned_date: "2026-10-08",
-                  selected_solution_option_id: "option-a",
-                },
-              },
-            },
-          ],
+          },
         },
         {
-          requirements: [
-            {
-              id: "requirement-a",
-              position: 1,
-              description: "Same position, earlier ID",
-              required_quantity: 2,
-              solution_option: {
-                id: "option-a",
-                work_package: {
-                  id: "work-package-a",
-                  name: "Alpha works",
-                  planned_date: "2026-10-08",
-                  selected_solution_option_id: "option-a",
-                },
-              },
+          id: "requirement-b",
+          position: 1,
+          description: "Same position, later ID",
+          required_quantity: 3,
+          solution_option: {
+            id: "option-a",
+            work_package: {
+              id: "work-package-a",
+              name: "Alpha works",
+              planned_date: "2026-10-08",
+              selected_solution_option_id: "option-a",
             },
-            {
-              id: "requirement-earliest",
-              position: 9,
-              description: "Earlier planned Work Package",
-              required_quantity: 1,
-              solution_option: {
-                id: "option-b",
-                work_package: {
-                  id: "work-package-b",
-                  name: "Beta works",
-                  planned_date: "2026-10-07",
-                  selected_solution_option_id: "option-b",
-                },
-              },
+          },
+        },
+        {
+          id: "requirement-a",
+          position: 1,
+          description: "Same position, earlier ID",
+          required_quantity: 2,
+          solution_option: {
+            id: "option-a",
+            work_package: {
+              id: "work-package-a",
+              name: "Alpha works",
+              planned_date: "2026-10-08",
+              selected_solution_option_id: "option-a",
             },
-            {
-              id: "requirement-unselected-option",
-              position: 0,
-              description: "Alternative plan only",
-              required_quantity: 99,
-              solution_option: {
-                id: "option-a-alternative",
-                work_package: {
-                  id: "work-package-a",
-                  name: "Alpha works",
-                  planned_date: "2026-10-08",
-                  selected_solution_option_id: "option-a",
-                },
-              },
+          },
+        },
+        {
+          id: "requirement-earliest",
+          position: 9,
+          description: "Earlier planned Work Package",
+          required_quantity: 1,
+          solution_option: {
+            id: "option-b",
+            work_package: {
+              id: "work-package-b",
+              name: "Beta works",
+              planned_date: "2026-10-07",
+              selected_solution_option_id: "option-b",
             },
-          ],
+          },
+        },
+        {
+          id: "requirement-unselected-option",
+          position: 0,
+          description: "Alternative plan only",
+          required_quantity: 99,
+          solution_option: {
+            id: "option-a-alternative",
+            work_package: {
+              id: "work-package-a",
+              name: "Alpha works",
+              planned_date: "2026-10-08",
+              selected_solution_option_id: "option-a",
+            },
+          },
         },
       ],
     });
@@ -247,7 +239,7 @@ function productRow(): ProductRow {
     description: "Rigid collar for combustible pipe penetrations.",
     canonical_unit: "each",
     inventory_snapshots: [],
-    solution_products: [],
+    requirements: [],
   };
 }
 

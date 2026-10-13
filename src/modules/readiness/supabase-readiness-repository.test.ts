@@ -82,18 +82,16 @@ describe("mapReadinessRow", () => {
             position: 0,
             description: "Install collars",
             required_quantity: 12,
-            solution_product: {
-              product: {
-                id: "product-1",
-                product_code: "SC-100",
-                name: "SC-100 Fire Collar",
-                canonical_unit: "each",
-                inventory_snapshots: [
-                  snapshot("snapshot-a", 14, "2026-10-01T21:00:00Z"),
-                  snapshot("snapshot-c", 8, "2026-10-01T21:00:00Z"),
-                  snapshot("snapshot-b", 20, "2026-09-30T21:00:00Z"),
-                ],
-              },
+            product: {
+              id: "product-1",
+              product_code: "SC-100",
+              name: "SC-100 Fire Collar",
+              canonical_unit: "each",
+              inventory_snapshots: [
+                snapshot("snapshot-a", 14, "2026-10-01T21:00:00Z"),
+                snapshot("snapshot-c", 8, "2026-10-01T21:00:00Z"),
+                snapshot("snapshot-b", 20, "2026-09-30T21:00:00Z"),
+              ],
             },
           },
         ]),
@@ -131,23 +129,21 @@ describe("mapReadinessRow", () => {
             position: 1,
             description: "Unmapped item",
             required_quantity: null,
-            solution_product: null,
+            product: null,
           },
           {
             id: "requirement-first",
             position: 0,
             description: "Known zero stock",
             required_quantity: 4,
-            solution_product: {
-              product: {
-                id: "product-2",
-                product_code: "PW-050",
-                name: "PW-050 Firestop Pipe Wrap",
-                canonical_unit: "roll",
-                inventory_snapshots: [
-                  snapshot("snapshot-zero", 0, "2026-10-02T00:00:00Z"),
-                ],
-              },
+            product: {
+              id: "product-2",
+              product_code: "PW-050",
+              name: "PW-050 Firestop Pipe Wrap",
+              canonical_unit: "roll",
+              inventory_snapshots: [
+                snapshot("snapshot-zero", 0, "2026-10-02T00:00:00Z"),
+              ],
             },
           },
         ]),

@@ -61,14 +61,12 @@ select is(
   (
     select count(*)
     from public.product_requirements as requirement
-    join public.solution_options as solution_option
-      on solution_option.id = requirement.solution_option_id
-    join public.solution_products as mapping
-      on mapping.id = requirement.solution_product_id
-    where mapping.solution_id <> solution_option.solution_id
+    left join public.products as product on product.id = requirement.product_id
+    where requirement.product_id is not null
+      and product.id is null
   ),
   0::bigint,
-  'every mapped requirement belongs to its option Solution'
+  'every resolved requirement references a Product directly'
 );
 
 select throws_ok(
@@ -78,14 +76,14 @@ select throws_ok(
       solution_option_id,
       position,
       description,
-      solution_product_id,
+      product_id,
       required_quantity
     ) values (
       '4fffffff-0000-0000-0000-000000000001',
       '70000000-0000-0000-0000-000000000001',
       99,
       'Duplicate mapped Product demand',
-      '60000000-0000-0000-0000-000000000001',
+      '30000000-0000-0000-0000-000000000001',
       1
     )
   $$,
@@ -101,7 +99,7 @@ select lives_ok(
       solution_option_id,
       position,
       description,
-      solution_product_id,
+      product_id,
       required_quantity
     ) values
       (

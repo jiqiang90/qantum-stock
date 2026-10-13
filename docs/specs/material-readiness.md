@@ -31,8 +31,8 @@ notification, create an Operations task, or track resolution.
    table writes remain denied.
 2. One Work Package represents one planned Scenario with one selected
    source-backed Solution Option from the selected Ryanfire catalogue subset.
-3. Solution Options, SolutionProduct associations, option-owned Product
-   Requirements, and Inventory Snapshots are independently authored synthetic
+3. Solution Options, option-owned Product Requirements and their Product
+   references, and Inventory Snapshots are independently authored synthetic
    data. The brief says the catalogue includes required products, but the
    received CSV contains no Product fields, usable Product mapping, Scenario
    eligibility, or demand quantities.
@@ -56,16 +56,16 @@ notification, create an Operations task, or track resolution.
 The First Slice is **Work Package-driven**: the Team Leader starts from planned
 work, then inspects its nominated Solution and Product evidence. Solution is
 context in this journey, not the navigation root or a formal bill of materials.
-The internal SolutionProduct association supports readiness evidence but is not
-presented as an approved catalogue or compliance decision. A Solution catalogue
-journey can be designed later if a real planning user and authoritative source
-are established.
+The direct Product reference on a Product Requirement supports readiness
+evidence but is not presented as an approved catalogue or compliance decision.
+A Solution catalogue journey can be designed later if a real planning user and
+authoritative source are established.
 
 The seed preserves twelve exact Solution rows selected from the received
 catalogue excerpt. Four are initially selected by the six Work Packages below,
 five more serve as eligible alternatives, and three remain catalogue coverage
 only. Each source row is still a Solution, not a Product Requirement or
-Inventory Snapshot. Products, Product Codes, mappings, Work Packages,
+Inventory Snapshot. Products, Product Codes, Product references, Work Packages,
 quantities, and Inventory Snapshots remain synthetic and do not claim that a
 Product is approved or compliant for a source-backed Solution.
 
@@ -86,21 +86,21 @@ together requires 10 sealant cartridges against one shared quantity of 8, so
 Aggregate Readiness exposes a shortage of 2 without allocating it to either
 package.
 The five Products have specific synthetic identities such as `SC-040 Fire
-Collar` and `IS-310 Intumescent Sealant 310 ml`. The
-illustrative mapping keeps the 40mm collar with the Ø40mm PVC pipe context and
+Collar` and `IS-310 Intumescent Sealant 310 ml`. The illustrative Product
+references keep the 40mm collar with the Ø40mm PVC pipe context and
 the sealant with pipe, cable, and conduit contexts, but it remains a synthetic
-assumption rather than a technical approval. Generic material descriptions and packaging units are not
-Product identities. Each Product owns one canonical unit; dependent quantities
-do not repeat or convert that unit. No Product Category entity is required by
-this slice.
+assumption rather than a technical approval. Generic material descriptions and
+packaging units are not Product identities. Each Product owns one canonical
+unit; dependent quantities do not repeat or convert that unit. No Product
+Category entity is required by this slice.
 
 ## Boundary
 
 ### Inputs
 
 - Work Packages and their planned dates.
-- Source-backed Solutions plus synthetic Products and SolutionProduct
-  associations.
+- Source-backed Solutions plus synthetic Products and direct Product references
+  from option-owned Product Requirements.
 - Product Requirements with required quantities.
 - Latest Inventory Snapshots with available quantities and capture times.
 - An explicit selection of two or more Work Packages made after entering

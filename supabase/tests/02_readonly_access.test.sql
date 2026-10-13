@@ -11,7 +11,6 @@ select ok(
         'public.work_packages',
         'public.products',
         'public.solution_options',
-        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -29,7 +28,6 @@ select ok(
         'public.work_packages',
         'public.products',
         'public.solution_options',
-        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -53,7 +51,6 @@ select ok(
         'public.work_packages',
         'public.products',
         'public.solution_options',
-        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -77,7 +74,6 @@ select results_eq(
         'public.work_packages',
         'public.products',
         'public.solution_options',
-        'public.solution_products',
         'public.product_requirements',
         'public.inventory_snapshots'
       ]
@@ -97,7 +93,6 @@ select results_eq(
         'work_packages',
         'products',
         'solution_options',
-        'solution_products',
         'product_requirements',
         'inventory_snapshots'
       )
@@ -110,7 +105,6 @@ select results_eq(
       ('product_requirements'::name),
       ('products'::name),
       ('solution_options'::name),
-      ('solution_products'::name),
       ('solutions'::name),
       ('work_packages'::name)
   $$,
